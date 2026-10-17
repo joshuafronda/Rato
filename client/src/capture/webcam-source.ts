@@ -8,10 +8,14 @@ export interface WebcamOptions {
   facingMode?: 'user' | 'environment'
 }
 
-// Any camera the browser can see: laptop webcam, USB webcam, a DSLR through its
-// webcam utility, or a tablet's front/back camera.
+// Any camera the browser can see: laptop webcam, USB webcam, or a DSLR through its webcam
+// utility. A tablet's own front/back camera also works, but only when the booth page is
+// served over https (browsers hide the camera on plain http://<laptop-ip>) - planned for
+// Phase 3.
 export class WebcamSource implements CaptureSource {
   private stream: MediaStream | null = null
+  // Bumped by every start() and stop(), so a start() that was overtaken can tell.
+  private generation = 0
   private readonly options: WebcamOptions
   private readonly media: MediaDevices | null
   private readonly grab: FrameGrabber
@@ -35,11 +39,20 @@ export class WebcamSource implements CaptureSource {
       throw new CaptureError('insecure', 'The camera only works on localhost or an https:// address')
     }
     this.stop()
+    const generation = this.generation
+    let stream: MediaStream
     try {
-      this.stream = await this.media.getUserMedia({ audio: false, video: this.constraints() })
+      stream = await this.media.getUserMedia({ audio: false, video: this.constraints() })
     } catch (error) {
       throw toCaptureError(error)
     }
+    // stop() or another start() ran while the camera was opening: release this stream
+    // instead of leaving the camera on with nothing holding it.
+    if (generation !== this.generation) {
+      releaseTracks(stream)
+      throw new CaptureError('cancelled', 'The camera was stopped while it was opening')
+    }
+    this.stream = stream
   }
 
   preview(): MediaStream {
@@ -47,12 +60,13 @@ export class WebcamSource implements CaptureSource {
     return this.stream
   }
 
-  capture(): Promise<Blob> {
+  async capture(): Promise<Blob> {
     return this.grab(this.preview())
   }
 
   stop(): void {
-    for (const track of this.stream?.getTracks() ?? []) track.stop()
+    this.generation += 1
+    if (this.stream) releaseTracks(this.stream)
     this.stream = null
   }
 
@@ -65,6 +79,10 @@ export class WebcamSource implements CaptureSource {
   }
 }
 
+function releaseTracks(stream: MediaStream): void {
+  for (const track of stream.getTracks()) track.stop()
+}
+
 const ERROR_KINDS: Record<string, CaptureErrorKind> = {
   NotAllowedError: 'permission-denied',
   SecurityError: 'permission-denied',
@@ -74,8 +92,15 @@ const ERROR_KINDS: Record<string, CaptureErrorKind> = {
   AbortError: 'in-use',
 }
 
+// Some browsers reject with plain objects (OverconstrainedError, MediaStreamError), so read
+// the name from any object, not only Error instances.
+function errorName(error: unknown): string {
+  if (typeof error !== 'object' || error === null || !('name' in error)) return ''
+  return typeof error.name === 'string' ? error.name : ''
+}
+
 function toCaptureError(error: unknown): CaptureError {
-  const name = error instanceof Error ? error.name : ''
+  const name = errorName(error)
   const kind = ERROR_KINDS[name] ?? 'unknown'
   return new CaptureError(kind, `Could not open the camera (${name || 'unknown error'})`, { cause: error })
 }

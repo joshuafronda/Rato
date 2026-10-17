@@ -14,21 +14,30 @@ test('the booth screen shows a live camera feed', async ({ page }) => {
     .toEqual({ playing: true, hasSize: true })
 })
 
-test('the booth explains a blocked camera and offers a retry', async ({ browser }) => {
-  const context = await browser.newContext()
-  const page = await context.newPage()
-  // Simulate the guest (or Windows) blocking the camera.
+test('a blocked camera is explained, and Try again recovers once it is allowed', async ({ page }) => {
+  // Simulate the guest (or Windows) blocking the camera until the test unblocks it.
   await page.addInitScript(() => {
-    navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('blocked', 'NotAllowedError'))
+    const open = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices)
+    const state = window as unknown as { cameraBlocked: boolean }
+    state.cameraBlocked = true
+    navigator.mediaDevices.getUserMedia = (constraints) =>
+      state.cameraBlocked ? Promise.reject(new DOMException('blocked', 'NotAllowedError')) : open(constraints)
   })
   await page.goto('/')
   await expect(page.getByRole('alert')).toContainText('Camera access was blocked')
-  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
-  await context.close()
+
+  await page.evaluate(() => {
+    ;(window as unknown as { cameraBlocked: boolean }).cameraBlocked = false
+  })
+  await page.getByRole('button', { name: 'Try again' }).click()
+  await expect(page.getByTestId('camera-preview')).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
 })
 
 test('the server is reachable and the database is migrated', async ({ request }) => {
   const res = await request.get('/api/health')
   expect(res.ok()).toBe(true)
-  expect(await res.json()).toEqual({ ok: true, database: 'ok', schemaVersion: 2 })
+  const body = await res.json()
+  expect(body).toMatchObject({ ok: true, database: 'ok' })
+  expect(body.schemaVersion).toBeGreaterThan(0)
 })

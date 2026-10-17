@@ -3,6 +3,9 @@ import { join } from 'node:path'
 import { defineConfig } from '@playwright/test'
 
 const PORT = 3100
+// A fresh storage folder per run, so every run migrates a brand-new database. The config is
+// re-read by each worker, but only the main process starts the web server with this value.
+const STORAGE_DIR = join(tmpdir(), `stripshot-e2e-${process.pid}-${Date.now()}`)
 
 export default defineConfig({
   testDir: 'e2e',
@@ -28,7 +31,7 @@ export default defineConfig({
     env: {
       PORT: String(PORT),
       HOST: '127.0.0.1',
-      STORAGE_DIR: join(tmpdir(), 'stripshot-e2e'),
+      STORAGE_DIR,
     },
   },
 })

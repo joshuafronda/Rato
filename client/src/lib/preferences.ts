@@ -17,3 +17,11 @@ export function writePreference(key: string, value: string): void {
     // Storage blocked: the booth still works, it just forgets the choice.
   }
 }
+
+export function clearPreference(key: string): void {
+  try {
+    localStorage.removeItem(PREFIX + key)
+  } catch {
+    // Storage blocked: nothing was stored to clear.
+  }
+}

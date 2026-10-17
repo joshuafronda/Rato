@@ -1,6 +1,6 @@
 CREATE TABLE admins (
   id INTEGER PRIMARY KEY,
-  username TEXT NOT NULL UNIQUE,
+  username TEXT NOT NULL UNIQUE COLLATE NOCASE,
   password_hash TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -50,12 +50,14 @@ CREATE TABLE strips (
   id INTEGER PRIMARY KEY,
   session_id INTEGER NOT NULL UNIQUE REFERENCES sessions (id) ON DELETE CASCADE,
   image_path TEXT NOT NULL,
-  share_code TEXT NOT NULL UNIQUE,
+  -- The share code is the only thing guarding a strip's /s/<code> link on the Wi-Fi.
+  share_code TEXT NOT NULL UNIQUE CHECK (length(share_code) >= 8),
   is_public INTEGER NOT NULL DEFAULT 0 CHECK (is_public IN (0, 1)),
   print_count INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Deleting a strip removes its print jobs too: a deleted strip leaves no guest data behind.
 CREATE TABLE print_jobs (
   id INTEGER PRIMARY KEY,
   strip_id INTEGER NOT NULL REFERENCES strips (id) ON DELETE CASCADE,
@@ -69,6 +71,7 @@ CREATE TABLE settings (
   value TEXT NOT NULL
 );
 
+-- The UNIQUE constraint already indexes share_code; this named index is the one the spec lists.
 CREATE INDEX idx_strips_share_code ON strips (share_code);
 CREATE INDEX idx_photos_session_id ON photos (session_id);
 CREATE INDEX idx_sessions_created_at ON sessions (created_at);

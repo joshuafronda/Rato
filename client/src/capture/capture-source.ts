@@ -11,7 +11,17 @@ export interface CaptureSource {
   stop(): void
 }
 
-export type CaptureErrorKind = 'permission-denied' | 'not-found' | 'in-use' | 'insecure' | 'not-started' | 'unknown'
+export type CaptureErrorKind =
+  | 'permission-denied'
+  | 'not-found'
+  | 'in-use'
+  | 'insecure'
+  | 'not-started'
+  /** stop() was called while start() was still opening the camera. */
+  | 'cancelled'
+  /** The camera went away while live (unplugged, webcam app closed). */
+  | 'disconnected'
+  | 'unknown'
 
 export class CaptureError extends Error {
   readonly kind: CaptureErrorKind

@@ -6,8 +6,10 @@ const ERROR_MESSAGES: Record<CaptureErrorKind, string> = {
   'permission-denied': 'Camera access was blocked. Allow the camera in the browser, then try again.',
   'not-found': 'No camera found. Plug in a camera or start the camera’s webcam app, then try again.',
   'in-use': 'The camera is busy in another app. Close that app, then try again.',
-  insecure: 'The camera only works at http://localhost:3000 or an https:// address.',
+  insecure: 'The camera only works when this page is opened on the laptop (localhost) or over https://.',
   'not-started': 'The camera has not started yet. Try again.',
+  cancelled: 'The camera was stopped while it was opening. Try again.',
+  disconnected: 'The camera was disconnected. Check the cable or the camera’s webcam app, then try again.',
   unknown: 'Something went wrong opening the camera. Try again.',
 }
 

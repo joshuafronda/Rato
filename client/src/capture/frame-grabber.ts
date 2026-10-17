@@ -12,6 +12,7 @@ export const grabFrame: FrameGrabber = async (stream) => {
   video.srcObject = stream
   try {
     await video.play()
+    if (video.videoWidth === 0 || video.videoHeight === 0) throw new Error('The camera sent no picture')
     const canvas = document.createElement('canvas')
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight

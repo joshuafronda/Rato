@@ -67,15 +67,52 @@ describe('WebcamSource', () => {
     expect(grabFrame).toHaveBeenCalledWith(source.preview())
   })
 
+  it('releases a stream that arrives after stop() was called', async () => {
+    const lateTrack = fakeTrack()
+    let resolveOpen: (stream: MediaStream) => void = () => {}
+    const pending = new Promise<MediaStream>((resolve) => {
+      resolveOpen = resolve
+    })
+    const source = new WebcamSource({}, fakeMedia({ getUserMedia: vi.fn(() => pending) }))
+
+    const starting = source.start()
+    source.stop()
+    resolveOpen(fakeStream([lateTrack]))
+
+    await expect(starting).rejects.toMatchObject({ kind: 'cancelled' })
+    expect(lateTrack.stop).toHaveBeenCalledOnce()
+    expect(() => source.preview()).toThrow(CaptureError)
+  })
+
+  it('releases the previous stream when started again', async () => {
+    const firstTrack = fakeTrack()
+    const getUserMedia = vi.fn().mockResolvedValueOnce(fakeStream([firstTrack])).mockResolvedValueOnce(fakeStream())
+    const source = new WebcamSource({}, fakeMedia({ getUserMedia }))
+    await source.start()
+    await source.start()
+    expect(firstTrack.stop).toHaveBeenCalledOnce()
+  })
+
+  it('rejects capture() before start()', async () => {
+    await expect(new WebcamSource({}, fakeMedia()).capture()).rejects.toMatchObject({ kind: 'not-started' })
+  })
+
   it.each([
     ['NotAllowedError', 'permission-denied'],
+    ['SecurityError', 'permission-denied'],
     ['NotFoundError', 'not-found'],
     ['OverconstrainedError', 'not-found'],
     ['NotReadableError', 'in-use'],
+    ['AbortError', 'in-use'],
     ['TypeError', 'unknown'],
   ])('maps %s to the %s error kind', async (name, kind) => {
     const media = fakeMedia({ getUserMedia: vi.fn(async () => Promise.reject(domError(name))) })
     await expect(new WebcamSource({}, media).start()).rejects.toMatchObject({ kind })
+  })
+
+  it('reads the error name from rejections that are not Error instances', async () => {
+    const media = fakeMedia({ getUserMedia: vi.fn(async () => Promise.reject({ name: 'NotFoundError' })) })
+    await expect(new WebcamSource({}, media).start()).rejects.toMatchObject({ kind: 'not-found' })
   })
 
   it('reports an insecure page when the browser hides the camera API', async () => {
