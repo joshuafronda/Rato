@@ -1,0 +1,4 @@
+{
+  "requiredChecks": ["test", "build", "lint", "e2e"],
+  "exclude": ["Build - Specs/**", "client/public/**"]
+}

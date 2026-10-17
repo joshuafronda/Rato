@@ -24,7 +24,9 @@ playwright-report/
 .scanloop/gitleaks.json
 .scanloop/semgrep.json
 .scanloop/osv.json
-.greploop/
+.greploop/*
+!.greploop/config.json
+!.greploop/rules.md
 
 # The BrewedOps kit is its own git repo
 agentic-framework-kit/
