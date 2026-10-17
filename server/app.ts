@@ -29,16 +29,26 @@ export function createApp({ db, clientDir }: AppOptions): express.Express {
     })
   }
 
+  app.use((_req, res) => {
+    res.status(404).json({ error: 'Not found' })
+  })
   app.use(jsonErrors)
   return app
 }
 
+const CLIENT_ERROR_MESSAGES: Record<number, string> = {
+  404: 'Not found',
+  413: 'Request too large',
+}
+
 // Every error leaves as JSON with no stack trace: the server is reachable from any phone on
 // the booth Wi-Fi, so internals stay in the laptop's log.
-const jsonErrors: ErrorRequestHandler = (error, _req, res, _next) => {
+const jsonErrors: ErrorRequestHandler = (error, _req, res, next) => {
+  // Too late for a JSON body; let Express close the connection.
+  if (res.headersSent) return next(error)
   const status = clientErrorStatus(error)
   if (status) {
-    res.status(status).json({ error: 'Bad request' })
+    res.status(status).json({ error: CLIENT_ERROR_MESSAGES[status] ?? 'Bad request' })
     return
   }
   console.error(error)

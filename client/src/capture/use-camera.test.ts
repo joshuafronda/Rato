@@ -1,8 +1,7 @@
 // @vitest-environment happy-dom
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { readPreference, writePreference } from '../lib/preferences.ts'
-import { CaptureError } from './capture-source.ts'
 import { useCamera } from './use-camera.ts'
 
 // A controllable getUserMedia: each call returns a stream whose tracks we can inspect.
@@ -55,7 +54,9 @@ beforeEach(() => {
   localStorage.clear()
 })
 
+// Vitest globals are off, so Testing Library cannot register its own cleanup.
 afterEach(() => {
+  cleanup()
   vi.restoreAllMocks()
 })
 
@@ -124,9 +125,12 @@ describe('useCamera', () => {
     act(() => calls[0].track.end())
     expect(result.current.state).toEqual({ status: 'error', kind: 'disconnected' })
     expect(result.current.source).toBeNull()
+    expect(calls[0].track.stop).toHaveBeenCalled()
   })
 
-  it('exposes CaptureError kinds, not raw browser errors', () => {
-    expect(new CaptureError('disconnected', 'x').kind).toBe('disconnected')
+  it('shows an unrecognised browser error as unknown', async () => {
+    failNext.push(domError('WeirdBrowserError'))
+    const { result } = renderHook(() => useCamera())
+    await waitFor(() => expect(result.current.state).toEqual({ status: 'error', kind: 'unknown' }))
   })
 })

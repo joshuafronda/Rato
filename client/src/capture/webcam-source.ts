@@ -44,6 +44,9 @@ export class WebcamSource implements CaptureSource {
     try {
       stream = await this.media.getUserMedia({ audio: false, video: this.constraints() })
     } catch (error) {
+      if (generation !== this.generation) {
+        throw new CaptureError('cancelled', 'The camera was stopped while it was opening', { cause: error })
+      }
       throw toCaptureError(error)
     }
     // stop() or another start() ran while the camera was opening: release this stream

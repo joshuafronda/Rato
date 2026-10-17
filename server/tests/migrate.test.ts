@@ -114,6 +114,37 @@ describe('runMigrations', () => {
     expect(db.isTransaction).toBe(false)
   })
 
+  it('refuses a migration that commits its own transaction, and does not record it', () => {
+    const dir = tempDir({ '001_sneaky.sql': 'CREATE TABLE early (id INTEGER); COMMIT;' })
+    const db = memoryDb()
+    expect(() => runMigrations(db, dir)).toThrow(/Migration 001_sneaky\.sql failed/)
+    expect(schemaVersion(db)).toBe(0)
+    expect(db.isTransaction).toBe(false)
+  })
+
+  it('keeps strips private by default and allows only one default filter', () => {
+    const db = memoryDb()
+    runMigrations(db)
+    db.prepare('INSERT INTO sessions (layout_id) VALUES (1)').run()
+    db.prepare("INSERT INTO strips (session_id, image_path, share_code) VALUES (1, 's.png', 'abcd1234')").run()
+    expect(db.prepare('SELECT is_public FROM strips').get()?.is_public).toBe(0)
+    const secondDefault = () => db.prepare("UPDATE filters SET is_default = 1 WHERE name = 'Warm'").run()
+    expect(secondDefault).toThrow(/UNIQUE/)
+  })
+
+  it('removes a guest session completely: photos, strip and print jobs', () => {
+    const db = memoryDb()
+    runMigrations(db)
+    db.prepare('INSERT INTO sessions (layout_id) VALUES (1)').run()
+    db.prepare("INSERT INTO photos (session_id, shot_number, image_path) VALUES (1, 1, 'p.jpg')").run()
+    db.prepare("INSERT INTO strips (session_id, image_path, share_code) VALUES (1, 's.png', 'abcd1234')").run()
+    db.prepare('INSERT INTO print_jobs (strip_id, copies) VALUES (1, 2)').run()
+    db.prepare('DELETE FROM sessions WHERE id = 1').run()
+    for (const table of ['photos', 'strips', 'print_jobs']) {
+      expect(db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get()?.n).toBe(0)
+    }
+  })
+
   it('refuses a .sql file whose name does not follow NNN_name.sql', () => {
     const dir = tempDir({ '001_good.sql': 'SELECT 1;', '2_typo.sql': 'SELECT 1;' })
     expect(() => runMigrations(memoryDb(), dir)).toThrow(/2_typo\.sql/)

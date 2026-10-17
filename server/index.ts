@@ -16,5 +16,6 @@ if (!clientDir) console.log('client/dist not found - run "npm run build" or use 
 const app = createApp({ db, clientDir })
 app.listen(config.port, config.host, (error) => {
   if (error) throw error
-  console.log(`StripShot running at http://localhost:${config.port}`)
+  const shown = config.host === '0.0.0.0' ? 'localhost' : config.host
+  console.log(`StripShot running at http://${shown}:${config.port}`)
 })

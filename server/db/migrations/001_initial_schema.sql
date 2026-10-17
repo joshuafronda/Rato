@@ -57,7 +57,8 @@ CREATE TABLE strips (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Deleting a strip removes its print jobs too: a deleted strip leaves no guest data behind.
+-- Remove a guest by deleting their SESSION: it cascades to photos, the strip and its print jobs.
+-- (Deleting only the strip row would leave the session's raw photos behind.)
 CREATE TABLE print_jobs (
   id INTEGER PRIMARY KEY,
   strip_id INTEGER NOT NULL REFERENCES strips (id) ON DELETE CASCADE,

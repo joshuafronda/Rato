@@ -84,6 +84,18 @@ describe('WebcamSource', () => {
     expect(() => source.preview()).toThrow(CaptureError)
   })
 
+  it('reports cancelled, not the browser error, when stopped while a failing open was pending', async () => {
+    let rejectOpen: (error: Error) => void = () => {}
+    const pending = new Promise<MediaStream>((_resolve, reject) => {
+      rejectOpen = reject
+    })
+    const source = new WebcamSource({}, fakeMedia({ getUserMedia: vi.fn(() => pending) }))
+    const starting = source.start()
+    source.stop()
+    rejectOpen(domError('NotAllowedError'))
+    await expect(starting).rejects.toMatchObject({ kind: 'cancelled' })
+  })
+
   it('releases the previous stream when started again', async () => {
     const firstTrack = fakeTrack()
     const getUserMedia = vi.fn().mockResolvedValueOnce(fakeStream([firstTrack])).mockResolvedValueOnce(fakeStream())

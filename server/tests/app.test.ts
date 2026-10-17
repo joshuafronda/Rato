@@ -70,8 +70,18 @@ describe('client pages', () => {
     expect(res.text).toContain('<title>StripShot</title>')
   })
 
-  it('returns 404 for a missing asset instead of index.html', async () => {
+  it('returns a JSON 404 for a missing asset instead of index.html', async () => {
     const res = await request(createApp({ db: migratedDb(), clientDir: clientDir() })).get('/assets/index-old.js')
     expect(res.status).toBe(404)
+    expect(res.body).toEqual({ error: 'Not found' })
+  })
+
+  it('returns a JSON 413 for a body over the limit', async () => {
+    const res = await request(createApp({ db: migratedDb() }))
+      .post('/api/health')
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify({ big: 'x'.repeat(1_100_000) }))
+    expect(res.status).toBe(413)
+    expect(res.body).toEqual({ error: 'Request too large' })
   })
 })

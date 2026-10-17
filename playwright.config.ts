@@ -3,12 +3,14 @@ import { join } from 'node:path'
 import { defineConfig } from '@playwright/test'
 
 const PORT = 3100
-// A fresh storage folder per run, so every run migrates a brand-new database. The config is
-// re-read by each worker, but only the main process starts the web server with this value.
-const STORAGE_DIR = join(tmpdir(), `stripshot-e2e-${process.pid}-${Date.now()}`)
+// A fresh storage folder per run, so every run migrates a brand-new database. Kept in an env
+// var so workers (which re-read this file) and e2e/global-setup.ts see the same folder.
+process.env.STRIPSHOT_E2E_STORAGE ??= join(tmpdir(), `stripshot-e2e-${process.pid}-${Date.now()}`)
+const STORAGE_DIR = process.env.STRIPSHOT_E2E_STORAGE
 
 export default defineConfig({
   testDir: 'e2e',
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: true,
   reporter: 'list',
   use: {

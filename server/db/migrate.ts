@@ -28,6 +28,9 @@ export function runMigrations(db: Database, dir: string = MIGRATIONS_DIR): numbe
     db.exec('BEGIN')
     try {
       db.exec(readFileSync(join(dir, file), 'utf8'))
+      // A file with its own COMMIT/ROLLBACK escapes the transaction, so its changes could not
+      // be rolled back together with the version record. Refuse it.
+      if (!db.isTransaction) throw new Error(`${file} must not BEGIN, COMMIT or ROLLBACK itself`)
       record.run(version)
       db.exec('COMMIT')
     } catch (error) {
