@@ -1,0 +1,30 @@
+node_modules/
+dist/
+coverage/
+*.log
+
+# Local data: guest photos and the database never leave the laptop
+storage/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Tooling output
+test-results/
+playwright-report/
+.scanloop/report.json
+.scanloop/gitleaks.json
+.scanloop/semgrep.json
+.scanloop/osv.json
+.greploop/
+
+# The BrewedOps kit is its own git repo
+agentic-framework-kit/
