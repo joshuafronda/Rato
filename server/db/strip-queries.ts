@@ -86,6 +86,13 @@ export function listPublicStrips(db: Database, limit: number): PublicStripRow[] 
     .all(limit) as unknown as PublicStripRow[]
 }
 
+// Every shared strip, for the online gallery.
+export function listAllPublicStrips(db: Database): (PublicStripRow & { image_path: string })[] {
+  return db
+    .prepare('SELECT share_code, image_path, created_at FROM strips WHERE is_public = 1 ORDER BY created_at DESC, id DESC')
+    .all() as unknown as (PublicStripRow & { image_path: string })[]
+}
+
 export function insertPrintJob(db: Database, stripId: number, copies: number): number {
   const result = db.prepare('INSERT INTO print_jobs (strip_id, copies) VALUES (?, ?)').run(stripId, copies)
   return Number(result.lastInsertRowid)

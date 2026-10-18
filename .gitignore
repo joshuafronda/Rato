@@ -3,7 +3,7 @@ dist/
 coverage/
 *.log
 
-# Local data: guest photos and the database never leave the laptop
+# Local data: raw photos and the database never leave the laptop
 storage/
 *.db
 *.db-journal
@@ -16,6 +16,7 @@ storage/
 !.env.example
 *.pem
 *.key
+*-firebase-adminsdk-*.json
 
 # Tooling output
 test-results/

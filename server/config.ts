@@ -14,6 +14,10 @@ export const config = {
   clientDir: join(ROOT, 'client', 'dist'),
   // The laptop's address for share links and QR codes. Empty = detect the Wi-Fi address.
   publicHost: process.env.PUBLIC_HOST || '',
+  // The online gallery (Firebase Storage). Off unless both are set: the bucket name and the
+  // path to the service account key file, which lives outside the repo.
+  firebaseBucket: process.env.FIREBASE_BUCKET || '',
+  firebaseKeyFile: process.env.FIREBASE_KEY_FILE || '',
 }
 
 export const databasePath = join(config.storageDir, 'rato.db')

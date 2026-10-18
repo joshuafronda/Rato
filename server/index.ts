@@ -6,6 +6,8 @@ import { openDatabase } from './db/connection.ts'
 import { runMigrations } from './db/migrate.ts'
 import { installStarterFrames } from './services/catalog.ts'
 import { deleteExpiredSessions } from './services/cleanup.ts'
+import { type CloudBucket, syncCloudGallery } from './services/cloud-gallery.ts'
+import { firebaseBucket } from './services/firebase-bucket.ts'
 import { shareBaseUrl } from './services/network.ts'
 
 for (const folder of storageFolders) mkdirSync(folder, { recursive: true })
@@ -23,6 +25,47 @@ const autoDelete = () => {
 }
 autoDelete()
 setInterval(autoDelete, AUTO_DELETE_CHECK_MS).unref()
+
+// The online gallery, when configured. Retries every half minute, so strips shared while the
+// internet is down go up once it is back. The booth never waits on it.
+const CLOUD_SYNC_MS = 30_000
+const bucket = connectBucket()
+if (bucket) {
+  let running = false
+  let lastError = ''
+  const cloudSync = async () => {
+    if (running) return
+    running = true
+    try {
+      const { uploaded, removed } = await syncCloudGallery(db, config.storageDir, bucket)
+      if (uploaded > 0 || removed > 0) console.log(`Online gallery: ${uploaded} uploaded, ${removed} removed`)
+      lastError = ''
+    } catch (error) {
+      // Logged once per new error, not every 30 seconds while offline.
+      const message = error instanceof Error ? error.message : String(error)
+      if (message !== lastError) console.log(`Online gallery sync failed, will retry: ${message}`)
+      lastError = message
+    } finally {
+      running = false
+    }
+  }
+  void cloudSync()
+  setInterval(cloudSync, CLOUD_SYNC_MS).unref()
+}
+
+// A bad key file leaves the online gallery off; the booth itself still starts.
+function connectBucket(): CloudBucket | undefined {
+  if (!config.firebaseBucket || !config.firebaseKeyFile) {
+    console.log('Online gallery off - set FIREBASE_BUCKET and FIREBASE_KEY_FILE to turn it on')
+    return undefined
+  }
+  try {
+    return firebaseBucket(config.firebaseBucket, config.firebaseKeyFile)
+  } catch (error) {
+    console.log(`Online gallery off - could not load the Firebase key: ${error instanceof Error ? error.message : error}`)
+    return undefined
+  }
+}
 
 const clientDir = existsSync(config.clientDir) ? config.clientDir : undefined
 if (!clientDir) console.log('client/dist not found - run "npm run build" or use the Vite dev server')

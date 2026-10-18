@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "express": "^5.3.0",
+    "firebase-admin": "^14.5.0",
     "qrcode": "^1.5.4",
     "yazl": "^3.3.1"
   },
