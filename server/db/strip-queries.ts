@@ -75,8 +75,11 @@ export function findStripVisibility(db: Database, shareCode: string): boolean | 
   return row ? row.is_public === 1 : undefined
 }
 
-export function setStripPublic(db: Database, shareCode: string, isPublic: boolean): boolean {
-  const result = db.prepare('UPDATE strips SET is_public = ? WHERE share_code = ?').run(isPublic ? 1 : 0, shareCode)
+// The guest's choice. onlineOk records whether they made it under the online gallery wording.
+export function setStripPublic(db: Database, shareCode: string, isPublic: boolean, onlineOk: boolean): boolean {
+  const result = db
+    .prepare('UPDATE strips SET is_public = ?, online_ok = ? WHERE share_code = ?')
+    .run(isPublic ? 1 : 0, onlineOk ? 1 : 0, shareCode)
   return Number(result.changes) > 0
 }
 
@@ -86,10 +89,12 @@ export function listPublicStrips(db: Database, limit: number): PublicStripRow[] 
     .all(limit) as unknown as PublicStripRow[]
 }
 
-// Every shared strip, for the online gallery.
-export function listAllPublicStrips(db: Database): StripRow[] {
+// Every strip a guest shared to the online gallery.
+export function listOnlineStrips(db: Database): StripRow[] {
   return db
-    .prepare('SELECT share_code, image_path, created_at FROM strips WHERE is_public = 1 ORDER BY created_at DESC, id DESC')
+    .prepare(
+      'SELECT share_code, image_path, created_at FROM strips WHERE is_public = 1 AND online_ok = 1 ORDER BY created_at DESC, id DESC',
+    )
     .all() as unknown as StripRow[]
 }
 

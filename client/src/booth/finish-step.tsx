@@ -21,6 +21,7 @@ const ONLINE_GALLERY_LABEL = 'Show my strip in the online gallery (anyone with t
 
 export function FinishStep({ strip, onPrintQueued, onDone }: FinishStepProps) {
   const [link, setLink] = useState<ShareLink | null>(null)
+  const [linkFailed, setLinkFailed] = useState(false)
   const [copies, setCopies] = useState(1)
   const [print, setPrint] = useState<PrintState>({ status: 'idle' })
   const [isPublic, setIsPublic] = useState(false)
@@ -33,13 +34,18 @@ export function FinishStep({ strip, onPrintQueued, onDone }: FinishStepProps) {
         if (!cancelled) setLink(found)
       },
       () => {
-        // No QR code then; printing and downloading still work.
+        // No QR code then; printing, downloading and sharing still work.
+        if (!cancelled) setLinkFailed(true)
       },
     )
     return () => {
       cancelled = true
     }
   }, [strip.shareCode])
+
+  // Without the link the booth cannot tell whether the online gallery is on, so the wording
+  // assumes it is: a guest is never told less than what sharing does.
+  const galleryLabel = link && !link.onlineGallery ? GALLERY_LABEL : ONLINE_GALLERY_LABEL
 
   const sendToPrinter = async () => {
     setPrint({ status: 'sending' })
@@ -106,11 +112,11 @@ export function FinishStep({ strip, onPrintQueued, onDone }: FinishStepProps) {
             ) : (
               <p className="caption">Loading the QR code…</p>
             )}
-            {/* Disabled until the link loads, so the guest consents to the right wording. */}
+            {/* Disabled while the link loads, so the guest consents to the right wording. */}
             <Toggle
-              label={link?.onlineGallery ? ONLINE_GALLERY_LABEL : GALLERY_LABEL}
+              label={galleryLabel}
               checked={isPublic}
-              disabled={!link}
+              disabled={!link && !linkFailed}
               onChange={(event) => void toggleGallery(event.target.checked)}
             />
             {shareError && <ErrorBanner message={shareError} />}

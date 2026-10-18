@@ -24,8 +24,9 @@ export interface ShareLink {
 }
 
 // The guest's choice: only strips they agree to share appear in the gallery.
-export function setVisibility(db: Database, shareCode: string, isPublic: boolean): void {
-  if (!SHARE_CODE_PATTERN.test(shareCode) || !setStripPublic(db, shareCode, isPublic)) {
+// With the online gallery on, the booth told the guest that sharing publishes online.
+export function setVisibility(db: Database, shareCode: string, isPublic: boolean, onlineGallery: boolean): void {
+  if (!SHARE_CODE_PATTERN.test(shareCode) || !setStripPublic(db, shareCode, isPublic, isPublic && onlineGallery)) {
     throw new RequestError(404, 'Strip not found')
   }
 }

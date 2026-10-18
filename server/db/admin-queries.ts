@@ -232,8 +232,10 @@ export function setDefaultFilter(db: Database, id: number): void {
 
 // --- strips and prints ---
 
+// Hiding a strip also withdraws its online consent; showing it never gives that consent.
 export function setStripPublicById(db: Database, id: number, isPublic: boolean): boolean {
-  return Number(db.prepare('UPDATE strips SET is_public = ? WHERE id = ?').run(isPublic ? 1 : 0, id).changes) > 0
+  const sql = isPublic ? 'UPDATE strips SET is_public = 1 WHERE id = ?' : 'UPDATE strips SET is_public = 0, online_ok = 0 WHERE id = ?'
+  return Number(db.prepare(sql).run(id).changes) > 0
 }
 
 export function findStripById(db: Database, id: number): { session_id: number; share_code: string } | undefined {
