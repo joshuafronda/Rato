@@ -40,6 +40,7 @@ export interface Filter {
 export interface BoothSettings {
   countdownSeconds: number
   captionText: string
+  captionLine2: string
   dateFormat: string
   printPaper: PrintPaper
 }
@@ -61,11 +62,12 @@ export function filters(db: Database): Filter[] {
 }
 
 export function boothSettings(db: Database): BoothSettings {
-  const settings = readSettings(db, ['countdown_seconds', 'caption_text', 'date_format', 'print_paper'])
+  const settings = readSettings(db, ['countdown_seconds', 'caption_text', 'caption_line2', 'date_format', 'print_paper'])
   const countdown = Number(settings.get('countdown_seconds'))
   return {
     countdownSeconds: Number.isInteger(countdown) && countdown > 0 ? countdown : DEFAULT_COUNTDOWN_SECONDS,
     captionText: settings.get('caption_text') ?? '',
+    captionLine2: settings.get('caption_line2') ?? '',
     dateFormat: settings.get('date_format') ?? '',
     printPaper: settings.get('print_paper') === '2x6' ? '2x6' : '4x6',
   }

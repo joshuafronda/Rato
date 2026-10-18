@@ -6,8 +6,10 @@ export const STRIP = {
   inset: 50,
   gap: 20,
   footerTop: 1550,
-  captionY: 1625,
-  dateY: 1690,
+  // Footer text, top to bottom: the date, the caption, the second caption line.
+  dateY: 1612,
+  captionY: 1660,
+  caption2Y: 1708,
   textMaxWidth: 360,
 } as const
 

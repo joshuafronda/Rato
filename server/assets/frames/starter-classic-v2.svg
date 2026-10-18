@@ -2,5 +2,5 @@
   <!-- Transparent inside, so the shots show through. Matches the composer's 600x1800 strip. -->
   <path fill="#1c1a21" fill-rule="evenodd" d="M0 0H600V1800H0Z M30 30V1770H570V30Z"/>
   <rect x="44" y="44" width="512" height="1712" fill="none" stroke="#c9a96e" stroke-width="3"/>
-  <path d="M220 1720H380" stroke="#c9a96e" stroke-width="3"/>
+  <path d="M220 1745H380" stroke="#c9a96e" stroke-width="3"/>
 </svg>

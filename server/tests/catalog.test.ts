@@ -72,19 +72,24 @@ describe('GET /api/filters', () => {
 describe('GET /api/booth-settings', () => {
   it('returns only the settings the booth screen needs', async () => {
     const db = migratedDb()
-    db.prepare("UPDATE settings SET value = 'Ana & Ben' WHERE key = 'caption_text'").run()
     const res = await request(app(db)).get('/api/booth-settings')
     expect(res.status).toBe(200)
-    expect(res.body).toEqual({ countdownSeconds: 3, captionText: 'Ana & Ben', dateFormat: 'MMM d, yyyy', printPaper: '4x6' })
+    expect(res.body).toEqual({
+      countdownSeconds: 3,
+      captionText: 'Knowing Christ More!',
+      captionLine2: 'JTFFC Batangas City',
+      dateFormat: 'MMM d, yyyy',
+      printPaper: '4x6',
+    })
   })
 })
 
 describe('frame images', () => {
   it('installs the starter frames once and never overwrites an existing file', () => {
     const framesDir = tempDir('rato-frames-')
-    writeFileSync(join(framesDir, 'starter-classic.svg'), 'replaced by the admin')
+    writeFileSync(join(framesDir, 'starter-classic-v2.svg'), 'replaced by the admin')
     installStarterFrames(framesDir)
-    expect(readFileSync(join(framesDir, 'starter-classic.svg'), 'utf8')).toBe('replaced by the admin')
+    expect(readFileSync(join(framesDir, 'starter-classic-v2.svg'), 'utf8')).toBe('replaced by the admin')
     expect(readFileSync(join(framesDir, 'starter-confetti.svg'), 'utf8')).toContain('<svg')
   })
 

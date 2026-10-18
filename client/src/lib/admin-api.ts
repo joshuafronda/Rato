@@ -58,6 +58,7 @@ export interface AdminPrintJob {
 export interface AdminSettings {
   countdownSeconds: number
   captionText: string
+  captionLine2: string
   dateFormat: string
   printer: string
   printPaper: '4x6' | '2x6'

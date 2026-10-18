@@ -38,22 +38,29 @@ describe('drawStrip', () => {
       grain: 0,
       grainTile: null,
       frame: picture('frame', 600, 1800),
-      caption: 'Ana & Ben',
+      caption: 'Knowing Christ More!',
+      caption2: 'JTFFC Batangas City',
       dateText: 'Oct 7, 2026',
     })
     const [first, second] = stripSlots(2)
     const shot1 = log.findIndex((entry) => entry.startsWith('drawImage(shot1'))
     const shot2 = log.findIndex((entry) => entry.startsWith('drawImage(shot2'))
     const frame = log.indexOf(`drawImage(frame, 0, 0, ${STRIP.width}, ${STRIP.height})`)
-    const caption = log.findIndex((entry) => entry.startsWith('fillText(Ana & Ben'))
     const date = log.findIndex((entry) => entry.startsWith('fillText(Oct 7, 2026'))
+    const caption = log.findIndex((entry) => entry.startsWith('fillText(Knowing Christ More!'))
+    const caption2 = log.findIndex((entry) => entry.startsWith('fillText(JTFFC Batangas City'))
     expect(log[0]).toBe('fillStyle=#ffffff')
     expect(log.slice(0, shot1)).toContain('filter=grayscale(1)')
     expect(log[shot1]).toMatch(new RegExp(`, ${first.x}, ${first.y}, ${first.width}, ${first.height}\\)$`))
     expect(log[shot2]).toMatch(new RegExp(`, ${second.x}, ${second.y}, ${second.width}, ${second.height}\\)$`))
     // The filter is reset before the frame, so frames keep their own colours.
     expect(log.slice(shot2, frame)).toContain('restore()')
-    expect([shot1 < shot2, shot2 < frame, frame < caption, caption < date]).toEqual([true, true, true, true])
+    // Under the frame: the date, then the two lines under it, top to bottom.
+    expect([shot1 < shot2, shot2 < frame, frame < date, date < caption, caption < caption2]).toEqual([true, true, true, true, true])
+    expect(log[date]).toContain(`, ${STRIP.dateY}, `)
+    expect(log[caption]).toContain(`, ${STRIP.captionY}, `)
+    expect(log[caption2]).toContain(`, ${STRIP.caption2Y}, `)
+    expect(STRIP.dateY < STRIP.captionY && STRIP.captionY < STRIP.caption2Y).toBe(true)
     expect(log).not.toContain('createPattern(undefined, repeat)')
   })
 
@@ -66,6 +73,7 @@ describe('drawStrip', () => {
       grainTile: picture('grain', 128, 128) as unknown as HTMLCanvasElement,
       frame: null,
       caption: '',
+      caption2: '',
       dateText: '',
     })
     expect(log.filter((entry) => entry === 'globalAlpha=0.25')).toHaveLength(3)

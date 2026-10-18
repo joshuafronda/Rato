@@ -16,8 +16,8 @@ vi.mock('./api.ts', () => ({
   }),
 }))
 vi.mock('../composer/compose-strip.ts', () => ({
-  composeStrip: vi.fn(async (request: { caption: string; dateText: string; frameUrl: string | null }) => {
-    calls.push(`compose ${request.frameUrl} "${request.caption}" "${request.dateText}"`)
+  composeStrip: vi.fn(async (request: { caption: string; caption2: string; dateText: string; frameUrl: string | null }) => {
+    calls.push(`compose ${request.frameUrl} "${request.dateText}" "${request.caption}" "${request.caption2}"`)
     return new Blob(['png'], { type: 'image/png' })
   }),
 }))
@@ -40,12 +40,18 @@ describe('saveStrip', () => {
       frame,
       filter,
       shots,
-      settings: { countdownSeconds: 3, captionText: 'Ana & Ben', dateFormat: 'MMM d, yyyy', printPaper: '4x6' },
+      settings: {
+        countdownSeconds: 3,
+        captionText: 'Knowing Christ More!',
+        captionLine2: 'JTFFC Batangas City',
+        dateFormat: 'MMM d, yyyy',
+        printPaper: '4x6',
+      },
       date: new Date(2026, 9, 7),
     })
     expect(strip.shareCode).toBe('abcdefghjk')
     expect(calls).toEqual([
-      'compose /frames/a.svg "Ana & Ben" "Oct 7, 2026"',
+      'compose /frames/a.svg "Oct 7, 2026" "Knowing Christ More!" "JTFFC Batangas City"',
       'session {"layoutId":1,"frameId":5,"filterId":3}',
       'photo 9/1',
       'photo 9/2',
@@ -59,10 +65,10 @@ describe('saveStrip', () => {
       frame: null,
       filter,
       shots,
-      settings: { countdownSeconds: 3, captionText: '', dateFormat: '', printPaper: '4x6' },
+      settings: { countdownSeconds: 3, captionText: '', captionLine2: '', dateFormat: '', printPaper: '4x6' },
       date: new Date(),
     })
-    expect(calls[0]).toBe('compose null "" ""')
+    expect(calls[0]).toBe('compose null "" "" ""')
     expect(calls[1]).toBe('session {"layoutId":1,"frameId":null,"filterId":3}')
   })
 })

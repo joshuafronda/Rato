@@ -271,7 +271,8 @@ describe('admin dashboard', () => {
     const res = await request(s.server).get('/api/admin/settings').set('Cookie', cookie)
     expect(res.body).toEqual({
       countdownSeconds: 3,
-      captionText: '',
+      captionText: 'Knowing Christ More!',
+      captionLine2: 'JTFFC Batangas City',
       dateFormat: 'MMM d, yyyy',
       printer: '',
       printPaper: '4x6',

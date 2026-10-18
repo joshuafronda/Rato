@@ -5,6 +5,7 @@ import { RequestError } from './request-error.ts'
 export interface Settings {
   countdownSeconds: number
   captionText: string
+  captionLine2: string
   dateFormat: string
   printer: string
   printPaper: '4x6' | '2x6'
@@ -26,6 +27,11 @@ const FIELDS: Record<keyof Settings, Field> = {
     write: (value) => wholeNumber(value, 1, 10, 'The countdown must be 1 to 10 seconds'),
   },
   captionText: { key: 'caption_text', read: (value) => value ?? '', write: (value) => text(value, 40, 'caption') },
+  captionLine2: {
+    key: 'caption_line2',
+    read: (value) => value ?? '',
+    write: (value) => text(value, 40, 'second caption line'),
+  },
   dateFormat: { key: 'date_format', read: (value) => value ?? '', write: (value) => text(value, 30, 'date format') },
   printer: { key: 'printer', read: (value) => value ?? '', write: (value) => text(value, 100, 'printer name') },
   printPaper: {

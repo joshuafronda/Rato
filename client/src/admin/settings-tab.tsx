@@ -54,8 +54,12 @@ function SettingsForm({ saved }: { saved: AdminSettings }) {
         />
       </label>
       <label className="field">
-        Caption on the strip
+        Line under the date (bold)
         <input value={form.captionText} maxLength={40} onChange={(event) => set('captionText', event.target.value)} />
+      </label>
+      <label className="field">
+        Second line
+        <input value={form.captionLine2} maxLength={40} onChange={(event) => set('captionLine2', event.target.value)} />
       </label>
       <label className="field">
         Date format (e.g. MMM d, yyyy or dd/MM/yyyy; empty = no date)

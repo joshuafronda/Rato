@@ -13,6 +13,7 @@ export interface StripDrawing {
   grainTile: HTMLCanvasElement | null
   frame: Picture | null
   caption: string
+  caption2: string
   dateText: string
 }
 
@@ -21,6 +22,7 @@ export interface StripRequest {
   filterParams: Record<string, number>
   frameUrl: string | null
   caption: string
+  caption2: string
   dateText: string
 }
 
@@ -28,7 +30,8 @@ const BACKGROUND = '#ffffff'
 const TEXT_COLOR = '#1c1a21'
 const FONT = "'Plus Jakarta Sans Variable', system-ui, 'Segoe UI', Roboto, sans-serif"
 
-// Builds the finished strip as a PNG: shots by layout, filter, frame on top, caption and date.
+// Builds the finished strip as a PNG: shots by layout, filter, frame on top, then the date
+// and the two caption lines under it.
 export async function composeStrip(request: StripRequest): Promise<Blob> {
   await loadFonts()
   const shots = await Promise.all(request.shots.map((shot) => createImageBitmap(shot)))
@@ -46,6 +49,7 @@ export async function composeStrip(request: StripRequest): Promise<Blob> {
       grainTile: grainTile(),
       frame,
       caption: request.caption,
+      caption2: request.caption2,
       dateText: request.dateText,
     })
     return await canvasToBlob(canvas, 'image/png')
@@ -81,21 +85,23 @@ export function drawStrip(context: CanvasRenderingContext2D, drawing: StripDrawi
   context.fillStyle = TEXT_COLOR
   context.textAlign = 'center'
   context.textBaseline = 'middle'
-  if (drawing.caption) {
-    context.font = `bold 44px ${FONT}`
-    context.fillText(drawing.caption, STRIP.width / 2, STRIP.captionY, STRIP.textMaxWidth)
-  }
-  if (drawing.dateText) {
-    context.font = `30px ${FONT}`
-    context.fillText(drawing.dateText, STRIP.width / 2, STRIP.dateY, STRIP.textMaxWidth)
-  }
+  drawText(context, drawing.dateText, `28px ${FONT}`, STRIP.dateY)
+  drawText(context, drawing.caption, `bold 38px ${FONT}`, STRIP.captionY)
+  drawText(context, drawing.caption2, `26px ${FONT}`, STRIP.caption2Y)
+}
+
+// One centred line of footer text; empty text draws nothing.
+function drawText(context: CanvasRenderingContext2D, text: string, font: string, y: number): void {
+  if (!text) return
+  context.font = font
+  context.fillText(text, STRIP.width / 2, y, STRIP.textMaxWidth)
 }
 
 // Canvas text only uses a web font that is already loaded; otherwise it silently falls
 // back to the system font.
 async function loadFonts(): Promise<void> {
   try {
-    await Promise.all([document.fonts.load(`bold 44px ${FONT}`), document.fonts.load(`30px ${FONT}`)])
+    await Promise.all([document.fonts.load(`bold 38px ${FONT}`), document.fonts.load(`28px ${FONT}`)])
   } catch {
     // The system font is fine too.
   }

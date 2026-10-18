@@ -23,6 +23,7 @@ export interface Filter {
 export interface BoothSettings {
   countdownSeconds: number
   captionText: string
+  captionLine2: string
   dateFormat: string
   printPaper: PrintPaper
 }

@@ -10,7 +10,7 @@ export interface FrameDesign {
   style: FrameStyle
 }
 
-// The white label in the footer, behind the caption and date (see STRIP.captionY/dateY),
+// The white label in the footer, behind the date and captions (see STRIP.dateY/caption2Y),
 // so the dark text stays readable on any frame colour.
 export const FRAME_LABEL = { x: 110, y: 1580, width: 380, height: 160, radius: 24 } as const
 

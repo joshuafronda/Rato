@@ -20,6 +20,7 @@ export async function saveStrip({ layout, frame, filter, shots, settings, date }
     filterParams: filter.params,
     frameUrl: frame?.imageUrl ?? null,
     caption: settings.captionText,
+    caption2: settings.captionLine2,
     dateText: formatDate(date, settings.dateFormat),
   })
   const session = await createSession({ layoutId: layout.id, frameId: frame?.id ?? null, filterId: filter.id })

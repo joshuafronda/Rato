@@ -17,7 +17,8 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
 
   await test.step('settings: caption and a 1-second countdown', async () => {
     await admin.getByRole('button', { name: 'Settings', exact: true }).click()
-    await admin.getByLabel('Caption on the strip').fill('Ana & Ben')
+    await admin.getByLabel('Line under the date').fill('Knowing Christ More!')
+    await admin.getByLabel('Second line').fill('JTFFC Batangas City')
     await admin.getByLabel('Countdown (seconds)').fill('1')
     await admin.getByRole('button', { name: 'Save settings' }).click()
     await expect(admin.getByText('Saved.')).toBeVisible()
