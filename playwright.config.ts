@@ -26,7 +26,7 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: 'npm run build && npm start',
+    command: 'npm start',
     url: `http://localhost:${PORT}/api/health`,
     reuseExistingServer: false,
     timeout: 120_000,

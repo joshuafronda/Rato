@@ -66,7 +66,8 @@ Full spec: `Build - Specs/prompt.md`.
 ## Running it
 - Development: `npm run dev` (Express API on :3000) and, in a second terminal,
   `npm run dev:client` (Vite on :5173, forwards /api to the server). Open http://localhost:5173.
-- Booth / event: `npm run build`, then `npm start`, then open http://localhost:3000.
+- Booth / event: `npm start` (builds the client, then starts the server), then open
+  http://localhost:3000.
 - **Nothing deploys unless the user says "deploy" for this change.**
 - Uploaded is not live. Use the changed feature on the real booth and report what was verified
   and what the user still needs to check.
