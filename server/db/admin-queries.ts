@@ -177,6 +177,23 @@ export function updateFrame(db: Database, id: number, changes: FrameChanges): bo
   return Number(result.changes) > 0
 }
 
+export function findFrameImage(db: Database, id: number): string | undefined {
+  const row = db.prepare('SELECT image_path FROM frames WHERE id = ?').get(id)
+  return row ? String(row.image_path) : undefined
+}
+
+export function countFramesUsingImage(db: Database, imagePath: string): number {
+  return Number(db.prepare('SELECT COUNT(*) AS n FROM frames WHERE image_path = ?').get(imagePath)?.n)
+}
+
+// Removes a frame. Sessions made with it keep their strips; they just stop pointing at it.
+export function deleteFrameRow(db: Database, id: number): void {
+  inTransaction(db, () => {
+    db.prepare('UPDATE sessions SET frame_id = NULL WHERE frame_id = ?').run(id)
+    db.prepare('DELETE FROM frames WHERE id = ?').run(id)
+  })
+}
+
 // A boolean change as 1/0 for SQLite, or null to keep the stored value.
 function optionalFlag(value: boolean | undefined): number | null {
   return value === undefined ? null : Number(value)

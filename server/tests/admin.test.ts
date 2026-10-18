@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import request from 'supertest'
 import { describe, expect, it, vi } from 'vitest'
@@ -223,6 +223,52 @@ describe('admin dashboard', () => {
     await request(s.server).patch(`/api/admin/frames/${res.body.id}`).set('Cookie', cookie).send({ showText: true })
     const after = (await request(s.server).get(`/api/frames?layoutId=${layoutId}`)).body.find((f: { id: number }) => f.id === res.body.id)
     expect(after.showText).toBe(true)
+  })
+
+  it('renames a frame and deletes it, file and all, keeping strips made with it', async () => {
+    const s = setup()
+    const cookie = await signedIn(s)
+    const layoutId = idOf(s.db, 'SELECT id FROM layouts WHERE shots = 2')
+    const uploaded = await request(s.server)
+      .post(`/api/admin/frames?layoutId=${layoutId}&name=Gold`)
+      .set('Cookie', cookie)
+      .set('Content-Type', 'image/png')
+      .send(pngOfSize(600, 1800))
+    const id = uploaded.body.id
+
+    expect((await request(s.server).patch(`/api/admin/frames/${id}`).set('Cookie', cookie).send({ name: '  Golden hour ' })).status).toBe(200)
+    const renamed = (await request(s.server).get('/api/admin/frames').set('Cookie', cookie)).body.find((f: { id: number }) => f.id === id)
+    expect(renamed.name).toBe('Golden hour')
+    expect((await request(s.server).patch(`/api/admin/frames/${id}`).set('Cookie', cookie).send({ name: '' })).status).toBe(400)
+
+    // A strip made with the frame.
+    const filterId = idOf(s.db, 'SELECT id FROM filters WHERE is_default = 1')
+    const session = await request(s.server).post('/api/sessions').send({ layoutId, frameId: id, filterId })
+    for (const shot of [1, 2]) {
+      await request(s.server).post(`/api/sessions/${session.body.id}/photos/${shot}`).set('Content-Type', 'image/jpeg').send(JPEG)
+    }
+    const strip = await request(s.server).post(`/api/sessions/${session.body.id}/strip`).set('Content-Type', 'image/png').send(PNG)
+
+    const res = await request(s.server).delete(`/api/admin/frames/${id}`).set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect((await request(s.server).get(`/api/frames?layoutId=${layoutId}`)).body.map((f: { id: number }) => f.id)).not.toContain(id)
+    expect(readdirSync(join(s.storageDir, 'frames'))).toEqual([])
+    // The strip and its session stay; the session just no longer points at the frame.
+    expect((await request(s.server).get(`/api/strips/${strip.body.shareCode}`)).status).toBe(200)
+    expect(s.db.prepare('SELECT frame_id FROM sessions WHERE id = ?').get(session.body.id)).toEqual({ frame_id: null })
+    expect((await request(s.server).delete(`/api/admin/frames/${id}`).set('Cookie', cookie)).status).toBe(404)
+  })
+
+  it('keeps a frame file another frame still uses', async () => {
+    const s = setup()
+    const cookie = await signedIn(s)
+    // The built-in frames share one file across the three layouts.
+    const ids = s.db.prepare("SELECT id FROM frames WHERE image_path = 'starter-confetti.svg'").all().map((row) => Number(row.id))
+    writeFileSync(join(s.storageDir, 'frames', 'starter-confetti.svg'), '<svg/>')
+    await request(s.server).delete(`/api/admin/frames/${ids[0]}`).set('Cookie', cookie)
+    expect(readdirSync(join(s.storageDir, 'frames'))).toEqual(['starter-confetti.svg'])
+    for (const other of ids.slice(1)) await request(s.server).delete(`/api/admin/frames/${other}`).set('Cookie', cookie)
+    expect(readdirSync(join(s.storageDir, 'frames'))).toEqual([])
   })
 
   it('turns frames and layouts off and reorders frames', async () => {

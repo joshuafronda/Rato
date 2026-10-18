@@ -10,6 +10,7 @@ import {
   changeFrame,
   changeLayout,
   changeStripVisibility,
+  deleteFrame,
   deleteStrip,
   makeDefaultFilter,
   overview,
@@ -115,6 +116,11 @@ export function adminRouter({ db, storageDir, backupDir }: AdminRouterOptions): 
     if ('active' in body) changes.active = booleanField(body, 'active')
     if ('showText' in body) changes.showText = booleanField(body, 'showText')
     changeFrame(db, idParam(req), changes)
+    res.json({ ok: true })
+  })
+
+  router.delete('/frames/:id', (req, res) => {
+    deleteFrame(db, storageDir, idParam(req))
     res.json({ ok: true })
   })
 

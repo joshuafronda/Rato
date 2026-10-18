@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { countPrints, printsSoFar, transparentPng } from './booth-helpers.ts'
+import { chooseFrame, countPrints, printsSoFar, transparentPng } from './booth-helpers.ts'
 
 // Phase 4 gate: the admin sets the booth up, a guest uses it, the admin manages the result.
 test('the admin configures the booth, reprints and moderates a strip', async ({ page, browser }) => {
@@ -37,7 +37,7 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
   await test.step('frames: design a frame in any colour for every layout', async () => {
     await admin.getByLabel('Frame name').fill('Mint')
     await admin.getByLabel('Any colour').fill('#3ddc97')
-    await admin.getByRole('button', { name: 'Confetti' }).click()
+    await admin.getByRole('region', { name: 'Design a frame' }).getByRole('button', { name: 'Confetti', exact: true }).click()
     await expect(admin.getByRole('img', { name: 'Frame preview' })).toBeVisible()
     await admin.getByRole('button', { name: 'Save frame' }).click()
     await expect(admin.getByText('Saved “Mint” for every layout.')).toBeVisible()
@@ -52,7 +52,7 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
     await page.getByRole('button', { name: 'Start' }).click()
     await page.getByRole('button', { name: /Classic duo/ }).click()
     await expect(page.getByRole('button', { name: /Mint/ })).toBeVisible()
-    await page.getByRole('button', { name: /Gold/ }).click()
+    await chooseFrame(page, /Gold/)
     await page.getByRole('button', { name: 'Take the photos' }).click()
     await page.getByRole('button', { name: 'Start the countdown' }).click()
     await expect(page.getByRole('heading', { name: 'How do these look?' })).toBeVisible({ timeout: 20_000 })
@@ -90,6 +90,23 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
     await admin.getByRole('button', { name: 'Delete' }).click()
     await expect(admin.getByText('No strips yet.')).toBeVisible()
     expect((await admin.request.get(`/api/strips/${code}`)).status()).toBe(404)
+  })
+
+  await test.step('frames: rename one and delete another', async () => {
+    await admin.getByRole('button', { name: 'Frames', exact: true }).click()
+    const classicDuo = admin.getByRole('region', { name: 'Classic duo' })
+    await classicDuo.getByRole('button', { name: 'Edit the name of Gold' }).click()
+    await classicDuo.getByLabel('New name for Gold').fill('Golden hour')
+    await classicDuo.getByRole('button', { name: 'Save name' }).click()
+    await expect(classicDuo.getByText('Golden hour')).toBeVisible()
+
+    admin.once('dialog', (dialog) => void dialog.accept())
+    await classicDuo.getByRole('button', { name: 'Delete Mint' }).click()
+    await expect(classicDuo.getByText('Mint')).toHaveCount(0)
+    // Only that layout's Mint is gone.
+    await expect(admin.getByRole('region', { name: 'Triple strip' }).getByText('Mint')).toBeVisible()
+    const frames = await (await admin.request.get('/api/admin/frames')).json()
+    expect(frames.map((frame: { name: string }) => frame.name)).toContain('Golden hour')
   })
 
   await test.step('backup', async () => {

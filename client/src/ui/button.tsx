@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, AnchorHTMLAttributes } from 'react'
+import type { AnchorHTMLAttributes, ComponentProps } from 'react'
 import { Icon, type IconName } from './icons.tsx'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive'
@@ -15,7 +15,7 @@ function buttonClass({ variant = 'primary', size = 'md' }: Look, extra?: string)
 }
 
 // ui/Button: primary (navy), secondary (outlined), destructive (red outline).
-export function Button({ variant, size, icon, className, children, type = 'button', ...rest }: Look & ButtonHTMLAttributes<HTMLButtonElement>) {
+export function Button({ variant, size, icon, className, children, type = 'button', ...rest }: Look & ComponentProps<'button'>) {
   return (
     <button type={type} className={buttonClass({ variant, size }, className)} {...rest}>
       {icon && <Icon name={icon} size={size === 'sm' ? 18 : 20} />}

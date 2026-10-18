@@ -95,6 +95,7 @@ export const adminApi = {
   },
   updateFrame: (id: number, changes: { name?: string; active?: boolean; showText?: boolean }) =>
     request<void>(`${BASE}/frames/${id}`, jsonPost(changes, 'PATCH')),
+  deleteFrame: (id: number) => request<void>(`${BASE}/frames/${id}`, { method: 'DELETE' }),
   reorderFrames: (layoutId: number, ids: number[]) => request<void>(`${BASE}/frames/reorder`, jsonPost({ layoutId, ids })),
   filters: () => request<AdminFilter[]>(`${BASE}/filters`),
   setFilterActive: (id: number, active: boolean) => request<void>(`${BASE}/filters/${id}`, jsonPost({ active }, 'PATCH')),

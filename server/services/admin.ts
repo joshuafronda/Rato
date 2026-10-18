@@ -3,6 +3,9 @@ import { rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   busiestHours,
+  countFramesUsingImage,
+  deleteFrameRow,
+  findFrameImage,
   findFilter,
   findPrintJob,
   findStripById,
@@ -101,6 +104,15 @@ export function changeFrame(db: Database, id: number, changes: FrameChanges): vo
     throw new RequestError(400, 'Give the frame a name of 1 to 40 characters')
   }
   if (!updateFrame(db, id, { ...changes, name: changes.name?.trim() })) throw new RequestError(404, 'Frame not found')
+}
+
+// Deletes a frame and, once no other frame uses it, its image file. Strips already made
+// with it are finished images and stay as they are.
+export function deleteFrame(db: Database, storageDir: string, id: number): void {
+  const imagePath = findFrameImage(db, id)
+  if (imagePath === undefined) throw new RequestError(404, 'Frame not found')
+  deleteFrameRow(db, id)
+  if (countFramesUsingImage(db, imagePath) === 0) rmSync(join(storageDir, 'frames', imagePath), { force: true })
 }
 
 // The new order of every frame of one layout, first to last.

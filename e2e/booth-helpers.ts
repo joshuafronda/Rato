@@ -6,7 +6,7 @@ export async function makeStrip(page: Page): Promise<string> {
   await page.goto('/')
   await page.getByRole('button', { name: 'Start' }).click()
   await page.getByRole('button', { name: /Classic duo/ }).click()
-  await page.getByRole('button', { name: /Classic/ }).first().click()
+  await chooseFrame(page, /Classic/)
   await page.getByRole('button', { name: 'Take the photos' }).click()
   await page.getByRole('button', { name: 'Start the countdown' }).click()
   await expect(page.getByRole('heading', { name: 'How do these look?' })).toBeVisible({ timeout: 30_000 })
@@ -17,6 +17,13 @@ export async function makeStrip(page: Page): Promise<string> {
   const code = /\/api\/strips\/([a-z2-9]{10})\/image/.exec(src)?.[1]
   if (!code) throw new Error(`No share code in ${src}`)
   return code
+}
+
+// Picks a frame: tap its card to see it enlarged, then use it.
+export async function chooseFrame(page: Page, name: RegExp): Promise<void> {
+  await page.getByRole('button', { name }).first().click()
+  await expect(page.getByRole('dialog', { name: 'Frame preview' })).toBeVisible()
+  await page.getByRole('button', { name: 'Use this frame' }).click()
 }
 
 // A fully transparent PNG, built by hand so the test needs no image library.

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { type Locator, type Page, expect, test } from '@playwright/test'
-import { countPrints } from './booth-helpers.ts'
+import { chooseFrame, countPrints } from './booth-helpers.ts'
 
 // The event's own frame (event-frames/knowing-christ-more.png): its photo windows are not
 // where the standard 3-photo holes are, and it carries its own text.
@@ -57,7 +57,7 @@ async function makeTripleStrip(page: Page, frame: RegExp): Promise<Locator> {
   await page.goto('/')
   await page.getByRole('button', { name: 'Start' }).click()
   await page.getByRole('button', { name: /Triple strip/ }).click()
-  await page.getByRole('button', { name: frame }).click()
+  await chooseFrame(page, frame)
   await page.getByRole('button', { name: 'Take the photos' }).click()
   await page.getByRole('button', { name: 'Start the countdown' }).click()
   await expect(page.getByRole('heading', { name: 'How do these look?' })).toBeVisible({ timeout: 40_000 })

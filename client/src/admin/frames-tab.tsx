@@ -7,6 +7,7 @@ import { Card } from '../ui/card.tsx'
 import { List, ListRow } from '../ui/list-row.tsx'
 import { Toggle } from '../ui/toggle.tsx'
 import { FrameDesignerCard } from './frame-designer-card.tsx'
+import { FrameName } from './frame-name.tsx'
 import { ActionError, LoadState } from './loading.tsx'
 import { useAction, useLoad } from './use-load.ts'
 
@@ -44,6 +45,11 @@ interface LayoutSectionProps {
 }
 
 function LayoutSection({ layout, frames, run }: LayoutSectionProps) {
+  const remove = (frame: AdminFrame) => {
+    const message = `Delete the frame "${frame.name}"? Guests will no longer see it. Strips already made with it stay as they are.`
+    if (window.confirm(message)) void run(() => adminApi.deleteFrame(frame.id))
+  }
+
   const move = (index: number, by: number) => {
     const ids = frames.map((frame) => frame.id)
     const [moved] = ids.splice(index, 1)
@@ -60,7 +66,11 @@ function LayoutSection({ layout, frames, run }: LayoutSectionProps) {
       />
       <List>
         {frames.map((frame, index) => (
-          <ListRow key={frame.id} leading={<img className="frame-mini" src={frame.imageUrl} alt="" />} title={frame.name}>
+          <ListRow
+            key={frame.id}
+            leading={<img className="frame-mini" src={frame.imageUrl} alt="" />}
+            title={<FrameName frame={frame} run={run} />}
+          >
             <Toggle
               label="On"
               checked={frame.active}
@@ -76,6 +86,9 @@ function LayoutSection({ layout, frames, run }: LayoutSectionProps) {
             </Button>
             <Button variant="secondary" size="sm" disabled={index === frames.length - 1} onClick={() => move(index, 1)}>
               Down
+            </Button>
+            <Button variant="destructive" size="sm" aria-label={`Delete ${frame.name}`} onClick={() => remove(frame)}>
+              Delete
             </Button>
           </ListRow>
         ))}

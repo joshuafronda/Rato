@@ -15,6 +15,7 @@ const PATHS = {
   phone: 'M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2',
   alert: 'M12 4 3 20h18zM12 10v4M12 17h.01',
   logout: 'M15 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3M10 8l-4 4 4 4M6 12h10',
+  zoom: 'M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM15.5 15.5 20 20M10.5 8v5M8 10.5h5',
 } as const
 
 export type IconName = keyof typeof PATHS
