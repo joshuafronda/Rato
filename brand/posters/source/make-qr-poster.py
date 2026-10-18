@@ -42,13 +42,13 @@ svg.deco {{ position: absolute; inset: 0; }}
 .strip img {{ width: 100%; height: 100%; display: block; border-radius: 6px; }}
 .strip.left {{ left: 70px; transform: rotate(-12deg); }}
 .strip.right {{ right: 70px; transform: rotate(12deg); }}
-.card {{ position: absolute; top: 380px; left: 50%; width: 520px; margin-left: -260px; padding: 34px 34px 26px;
+.card {{ position: absolute; top: 400px; left: 50%; width: 540px; margin-left: -270px; padding: 44px 40px 40px;
   border-radius: 34px; background: #fff; text-align: center; color: #14284F;
   box-shadow: 0 30px 60px rgba(0,0,0,.45), 0 0 0 8px rgba(244,213,137,.85); z-index: 5; }}
 .badge {{ position: absolute; top: -30px; left: 50%; transform: translateX(-50%) rotate(-3deg); padding: 8px 30px 2px;
   font-family: 'Bebas'; font-size: 46px; letter-spacing: 6px; color: #14284F; white-space: nowrap;
   background: linear-gradient(90deg, #F6E3A1, #D9AE52, #F2D78A); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,.3); }}
-.qr {{ display: block; width: 440px; height: 440px; margin: 10px auto 0; image-rendering: pixelated; }}
+.qr {{ display: block; width: 460px; height: 460px; margin: 10px auto 0; image-rendering: pixelated; }}
 .url {{ margin-top: 8px; font-weight: 800; font-size: 26px; letter-spacing: .3px; color: #14284F; }}
 .hint {{ margin-top: 4px; font-size: 16px; color: #5B6577; }}
 .steps {{ position: absolute; top: 1056px; left: 70px; right: 70px; display: flex; gap: 18px; }}
@@ -80,8 +80,6 @@ svg.deco {{ position: absolute; inset: 0; }}
 <div class="card">
   <div class="badge">SCAN ME</div>
   <img class="qr" src="{QR}" alt="QR code">
-  <div class="url">{URL.replace('https://', '').rstrip('/')}</div>
-  <div class="hint">View and download your photo strips</div>
 </div>
 <div class="steps">
   <div class="step"><div class="num">1</div><div><b>Open your camera</b><span>On any phone</span></div></div>
