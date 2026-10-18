@@ -2,7 +2,7 @@ import { extname, join } from 'node:path'
 import express, { type ErrorRequestHandler } from 'express'
 import type { Database } from './db/connection.ts'
 import { adminRouter } from './routes/admin.ts'
-import { boothRouter } from './routes/booth.ts'
+import { boothOnly, boothRouter } from './routes/booth.ts'
 import { catalogRouter } from './routes/catalog.ts'
 import { sharingRouter } from './routes/sharing.ts'
 import { healthRouter } from './routes/health.ts'
@@ -24,6 +24,11 @@ export interface AppOptions {
   onlineGallery?: boolean
   // Called after a finished strip is saved, to post it online straight away.
   onStripSaved?: () => void
+  // Other devices on the Wi-Fi may run the booth too (BOOTH_ANY_DEVICE).
+  boothAnyDevice?: boolean
+  // The certificate authority behind the booth's https address, for an iPad to download and
+  // trust. Only served while other devices may run the booth.
+  boothCaCert?: string
 }
 
 export function createApp({
@@ -34,19 +39,28 @@ export function createApp({
   shareBaseUrl = () => 'http://localhost:3000',
   onlineGallery = false,
   onStripSaved = () => {},
+  boothAnyDevice = false,
+  boothCaCert,
 }: AppOptions): express.Express {
   const app = express()
+  const boothGuard = boothOnly(boothAnyDevice)
   app.disable('x-powered-by')
   app.use(express.json({ limit: '1mb' }))
 
   app.use('/api', healthRouter(db))
   app.use('/api', catalogRouter(db))
-  app.use('/api', boothRouter(db, storageDir, onStripSaved))
-  app.use('/api', sharingRouter(db, shareBaseUrl, onlineGallery))
+  app.use('/api', boothRouter(db, storageDir, boothGuard, onStripSaved))
+  app.use('/api', sharingRouter(db, shareBaseUrl, onlineGallery, boothGuard))
   app.use('/api/admin', adminRouter({ db, storageDir, backupDir }))
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Not found' })
   })
+
+  if (boothCaCert) {
+    app.get('/rato-booth-ca.crt', (_req, res) => {
+      res.type('application/x-x509-ca-cert').send(boothCaCert)
+    })
+  }
 
   app.use(FRAMES_URL, express.static(join(storageDir, 'frames'), { setHeaders: lockDownImage }))
 

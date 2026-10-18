@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { boothIdFrom, parsePort } from '../config.ts'
+import { boothAnyDeviceFrom, boothIdFrom, parsePort } from '../config.ts'
 
 describe('parsePort', () => {
   it('defaults to 3000 when PORT is unset or empty', () => {
@@ -24,5 +24,23 @@ describe('boothIdFrom', () => {
     expect(boothIdFrom('../../x', 'pc')).toBe('x')
     expect(boothIdFrom(undefined, '***')).toBe('booth')
     expect(boothIdFrom('a'.repeat(50), 'pc')).toHaveLength(32)
+  })
+})
+
+describe('boothAnyDeviceFrom', () => {
+  it('is on only for the word true, in any case', () => {
+    expect(boothAnyDeviceFrom('true')).toBe(true)
+    expect(boothAnyDeviceFrom('TRUE')).toBe(true)
+    expect(boothAnyDeviceFrom(undefined)).toBe(false)
+    expect(boothAnyDeviceFrom('')).toBe(false)
+    expect(boothAnyDeviceFrom('yes')).toBe(false)
+  })
+})
+
+describe('parsePort for HTTPS_PORT', () => {
+  it('has its own default and names itself in the error', () => {
+    expect(parsePort(undefined, 'HTTPS_PORT', 3443)).toBe(3443)
+    expect(parsePort('8443', 'HTTPS_PORT', 3443)).toBe(8443)
+    expect(() => parsePort('abc', 'HTTPS_PORT', 3443)).toThrow(/HTTPS_PORT must be a whole number/)
   })
 })

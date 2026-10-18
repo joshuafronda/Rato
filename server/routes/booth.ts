@@ -9,10 +9,10 @@ const photoBody = express.raw({ type: IMAGE_TYPES, limit: '15mb' })
 const stripBody = express.raw({ type: IMAGE_TYPES, limit: '25mb' })
 
 // The guest flow: start a session, upload the shots, upload the finished strip.
-export function boothRouter(db: Database, storageDir: string, onStripSaved: () => void): Router {
+export function boothRouter(db: Database, storageDir: string, boothGuard: RequestHandler, onStripSaved: () => void): Router {
   const router = Router()
 
-  router.post('/sessions', boothOnly, (req, res) => {
+  router.post('/sessions', boothGuard, (req, res) => {
     const body: unknown = req.body
     const { layoutId, frameId, filterId } = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
     if (!isId(layoutId)) return badRequest(res, 'Choose a layout')
@@ -21,7 +21,7 @@ export function boothRouter(db: Database, storageDir: string, onStripSaved: () =
     res.status(201).json(createSession(db, { layoutId, frameId, filterId }))
   })
 
-  router.post('/sessions/:id/photos/:shot', boothOnly, photoBody, (req, res) => {
+  router.post('/sessions/:id/photos/:shot', boothGuard, photoBody, (req, res) => {
     const sessionId = positiveInteger(req.params.id)
     if (sessionId === null) return badRequest(res, 'Session not found', 404)
     // 0 and junk become out-of-range shots, which the service explains with the shot count.
@@ -30,7 +30,7 @@ export function boothRouter(db: Database, storageDir: string, onStripSaved: () =
     res.status(201).json({ ok: true })
   })
 
-  router.post('/sessions/:id/strip', boothOnly, stripBody, (req, res) => {
+  router.post('/sessions/:id/strip', boothGuard, stripBody, (req, res) => {
     const sessionId = positiveInteger(req.params.id)
     if (sessionId === null) return badRequest(res, 'Session not found', 404)
     const strip = saveStripFile(db, storageDir, sessionId, imageBody(req.body, 'Send the strip as a PNG image'))
@@ -53,10 +53,13 @@ export function boothRouter(db: Database, storageDir: string, onStripSaved: () =
   return router
 }
 
-// Taking photos needs the camera, which the browser only opens on localhost, so the booth
-// screen always talks to the server over loopback. Phones on the Wi-Fi can view strips but
-// cannot create sessions or upload files.
-export const boothOnly = localOnly('Only the booth screen can do this')
+// Booth writes: sessions, photos, strips, printing and sharing. By default only the laptop
+// itself, so phones on the Wi-Fi can view strips but not make them. With the BOOTH_ANY_DEVICE
+// option, any device on the Wi-Fi (an iPad over https) can be a booth too.
+export function boothOnly(anyDevice: boolean): RequestHandler {
+  if (anyDevice) return (_req, _res, next) => next()
+  return localOnly('Only the booth screen can do this')
+}
 
 // Lets a request through only from the laptop itself (http://localhost).
 export function localOnly(message: string): RequestHandler {

@@ -241,12 +241,20 @@ describe('booth-only writes', () => {
     const json = vi.fn()
     const res = { status: vi.fn(() => ({ json })) } as unknown as Response
     const next = vi.fn()
-    boothOnly({ socket: { remoteAddress: '192.168.1.20' } } as Request, res, next)
+    boothOnly(false)({ socket: { remoteAddress: '192.168.1.20' } } as Request, res, next)
     expect(next).not.toHaveBeenCalled()
     expect(res.status).toHaveBeenCalledWith(403)
     expect(json).toHaveBeenCalledWith({ error: 'Only the booth screen can do this' })
 
-    boothOnly({ socket: { remoteAddress: '127.0.0.1' } } as Request, res, next)
+    boothOnly(false)({ socket: { remoteAddress: '127.0.0.1' } } as Request, res, next)
     expect(next).toHaveBeenCalledOnce()
+  })
+
+  it('lets another device (an iPad) be a booth when the option is on', () => {
+    const res = { status: vi.fn() } as unknown as Response
+    const next = vi.fn()
+    boothOnly(true)({ socket: { remoteAddress: '192.168.1.20' } } as Request, res, next)
+    expect(next).toHaveBeenCalledOnce()
+    expect(res.status).not.toHaveBeenCalled()
   })
 })

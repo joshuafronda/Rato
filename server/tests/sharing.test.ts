@@ -4,7 +4,7 @@ import request from 'supertest'
 import { describe, expect, it } from 'vitest'
 import { createApp } from '../app.ts'
 import type { Database } from '../db/connection.ts'
-import { lanAddress, shareBaseUrl } from '../services/network.ts'
+import { ipv4Addresses, lanAddress, shareBaseUrl } from '../services/network.ts'
 import { migratedDb, tempDir } from './helpers.ts'
 
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4])
@@ -144,5 +144,19 @@ describe('shareBaseUrl', () => {
     expect(shareBaseUrl(3000, '', wifi)).toBe('http://192.168.1.20:3000')
     expect(shareBaseUrl(3000, 'booth.local', wifi)).toBe('http://booth.local:3000')
     expect(shareBaseUrl(3000, '', {})).toBe('http://localhost:3000')
+  })
+})
+
+describe('ipv4Addresses', () => {
+  it('lists every outside IPv4 address of the laptop', () => {
+    const interfaces = {
+      'Wi-Fi': [
+        { address: '192.168.1.15', family: 'IPv4', internal: false },
+        { address: 'fe80::1', family: 'IPv6', internal: false },
+      ],
+      Ethernet: [{ address: '10.0.0.7', family: 'IPv4', internal: false }],
+      Loopback: [{ address: '127.0.0.1', family: 'IPv4', internal: true }],
+    } as unknown as Parameters<typeof ipv4Addresses>[0]
+    expect(ipv4Addresses(interfaces)).toEqual(['192.168.1.15', '10.0.0.7'])
   })
 })

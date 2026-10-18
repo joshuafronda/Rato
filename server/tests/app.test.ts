@@ -73,3 +73,18 @@ describe('client pages', () => {
     expect(res.body).toEqual({ error: 'Request too large' })
   })
 })
+
+describe('GET /rato-booth-ca.crt', () => {
+  it('lets an iPad download the booth certificate authority to trust', async () => {
+    const caCert = '-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----\n'
+    const server = createApp({ db: migratedDb(), storageDir: tempDir('rato-storage-'), boothCaCert: caCert })
+    const res = await request(server).get('/rato-booth-ca.crt')
+    expect(res.status).toBe(200)
+    expect(res.headers['content-type']).toMatch(/^application\/x-x509-ca-cert/)
+    expect(res.text).toBe(caCert)
+  })
+
+  it('does not exist while other devices may not run the booth', async () => {
+    expect((await request(app()).get('/rato-booth-ca.crt')).status).toBe(404)
+  })
+})

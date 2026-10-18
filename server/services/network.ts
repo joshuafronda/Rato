@@ -11,13 +11,19 @@ export function shareBaseUrl(port: number, override = '', interfaces: Interfaces
 
 // The laptop's own IPv4 address on a home or venue network (192.168.x, 10.x, 172.16-31.x).
 export function lanAddress(interfaces: Interfaces): string | null {
-  const candidates: string[] = []
+  const candidates = ipv4Addresses(interfaces)
+  return candidates.find(isPrivateAddress) ?? candidates[0] ?? null
+}
+
+// Every IPv4 address other devices could reach the laptop on.
+export function ipv4Addresses(interfaces: Interfaces = networkInterfaces()): string[] {
+  const found: string[] = []
   for (const addresses of Object.values(interfaces)) {
     for (const address of addresses ?? []) {
-      if (address.family === 'IPv4' && !address.internal) candidates.push(address.address)
+      if (address.family === 'IPv4' && !address.internal) found.push(address.address)
     }
   }
-  return candidates.find(isPrivateAddress) ?? candidates[0] ?? null
+  return found
 }
 
 function isPrivateAddress(address: string): boolean {

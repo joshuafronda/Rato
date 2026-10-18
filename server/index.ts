@@ -1,4 +1,6 @@
 import { existsSync, mkdirSync } from 'node:fs'
+import { createServer as createHttpsServer } from 'node:https'
+import { networkInterfaces } from 'node:os'
 import { join } from 'node:path'
 import { createApp } from './app.ts'
 import { config, databasePath, storageFolders } from './config.ts'
@@ -8,7 +10,8 @@ import { installStarterFrames } from './services/catalog.ts'
 import { deleteExpiredSessions } from './services/cleanup.ts'
 import { type CloudBucket, cloudGallerySync, coalescedRunner } from './services/cloud-gallery.ts'
 import { firebaseBucket } from './services/firebase-bucket.ts'
-import { shareBaseUrl } from './services/network.ts'
+import { type BoothCertificate, boothCertificate } from './services/https-cert.ts'
+import { ipv4Addresses, lanAddress, shareBaseUrl } from './services/network.ts'
 
 for (const folder of storageFolders) mkdirSync(folder, { recursive: true })
 installStarterFrames(join(config.storageDir, 'frames'))
@@ -71,6 +74,19 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
+// With BOOTH_ANY_DEVICE, an iPad can be a booth. Its browser only opens the camera on https,
+// so the booth also gets an https address with a certificate the iPad trusts once.
+const certificate = config.boothAnyDevice ? await loadCertificate() : undefined
+
+async function loadCertificate(): Promise<BoothCertificate | undefined> {
+  try {
+    return await boothCertificate(join(config.storageDir, 'certs'), ipv4Addresses())
+  } catch (error) {
+    console.log(`No https address - could not make the booth certificate: ${errorMessage(error)}`)
+    return undefined
+  }
+}
+
 const clientDir = existsSync(config.clientDir) ? config.clientDir : undefined
 if (!clientDir) console.log('client/dist not found - run "npm run build" or use the Vite dev server')
 
@@ -82,6 +98,8 @@ const app = createApp({
   shareBaseUrl: () => shareBaseUrl(config.port, config.publicHost),
   onlineGallery: bucket !== undefined,
   onStripSaved: () => syncNow(),
+  boothAnyDevice: config.boothAnyDevice,
+  boothCaCert: certificate?.caCert,
 })
 app.listen(config.port, config.host, (error) => {
   if (error) throw error
@@ -89,3 +107,13 @@ app.listen(config.port, config.host, (error) => {
   console.log(`Rato running at http://${shown}:${config.port}`)
   console.log(`Phones on the same Wi-Fi: ${shareBaseUrl(config.port, config.publicHost)}/gallery`)
 })
+
+if (certificate) {
+  createHttpsServer({ key: certificate.key, cert: certificate.cert }, app).listen(config.httpsPort, config.host, () => {
+    const host = config.publicHost || lanAddress(networkInterfaces()) || 'localhost'
+    console.log(`Other devices can run the booth at https://${host}:${config.httpsPort}`)
+    console.log(`  First, on each iPad, install the certificate: http://${host}:${config.port}/rato-booth-ca.crt`)
+  })
+} else if (config.boothAnyDevice) {
+  console.log('Other devices can run the booth, but without https their cameras stay blocked')
+}
