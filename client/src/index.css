@@ -1013,3 +1013,65 @@ h3 {
 .download-row {
   justify-content: flex-start;
 }
+
+.auth-tabs {
+  justify-content: flex-start;
+}
+
+/* ---------- admin/FrameDesigner ---------- */
+.designer {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.designer > .card-form {
+  flex: 1;
+  min-width: 0;
+}
+
+.designer-preview {
+  flex: none;
+  width: 110px;
+  height: 330px;
+  border-radius: 8px;
+  /* Shows through the holes, where the guests' photos will be. */
+  background: repeating-linear-gradient(45deg, #d5dde7 0 10px, #e3e8ee 10px 20px);
+  box-shadow: 0 4px 16px rgb(20 40 79 / 12%);
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatch {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.swatch[aria-pressed='true'] {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--navy);
+}
+
+.swatch-custom {
+  overflow: hidden;
+  background: conic-gradient(#e63946, #ffd166, #9bc45a, #4aa3df, #a78bfa, #e63946);
+}
+
+.swatch-custom input {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  opacity: 0;
+  cursor: pointer;
+}

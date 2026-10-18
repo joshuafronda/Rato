@@ -22,7 +22,7 @@ import {
   LoginLimiter,
   SESSION_MAX_AGE_MS,
   adminForToken,
-  createFirstAdmin,
+  createAccount,
   logIn,
   logOut,
   setupNeeded,
@@ -35,8 +35,8 @@ import { localOnly } from './booth.ts'
 import { badRequest, positiveInteger } from './http.ts'
 
 const COOKIE = 'rato_admin'
-export const setupOnLaptop = localOnly(
-  'Create the admin account on the booth laptop: open http://localhost:3000/admin there. After that you can sign in from any device.',
+export const accountsOnLaptop = localOnly(
+  'Create admin accounts on the booth laptop: open http://localhost:3000/admin there. After that you can sign in from any device.',
 )
 const frameBody = express.raw({ type: 'image/png', limit: '10mb' })
 
@@ -57,10 +57,11 @@ export function adminRouter({ db, storageDir, backupDir }: AdminRouterOptions): 
     res.json({ setupNeeded: setupNeeded(db), username: admin?.username ?? null })
   })
 
-  // The first admin can only be created on the booth laptop itself.
-  router.post('/setup', setupOnLaptop, (req, res) => {
+  // Accounts can only be created on the booth laptop itself, so nobody on the Wi-Fi can
+  // make themselves an admin.
+  router.post('/accounts', accountsOnLaptop, (req, res) => {
     const { username, password } = credentials(req.body)
-    setSessionCookie(res, createFirstAdmin(db, username, password))
+    setSessionCookie(res, createAccount(db, username, password))
     res.status(201).json({ ok: true })
   })
 

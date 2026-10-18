@@ -71,7 +71,7 @@ Full spec: `Build - Specs/prompt.md`.
   Once per laptop: `scripts\allow-phones-firewall.cmd` as administrator, so phones reach
   the gallery and QR links. The server prints the phone address at startup; set PUBLIC_HOST
   if it picked the wrong network.
-- Admin: open http://localhost:3000/admin on the booth laptop once to create the admin account
+- Admin: open http://localhost:3000/admin on the booth laptop and choose "Create an account"
   (only possible from the laptop). After that, sign in from any phone at
   http://<laptop-ip>:3000/admin. Backups go to `backups/` (set BACKUP_DIR to change it).
 - Print paper is the `print_paper` setting: `4x6` (two strips side by side, cut in half) or
@@ -96,5 +96,6 @@ Full spec: `Build - Specs/prompt.md`.
 - Everything in the user's global rules file applies here too.
 - Show the plan for each phase before writing code and wait for the user's go.
 - Gallery is opt-in: only strips a guest chooses to share are public. Auto-delete is an admin
-  setting, off by default. One admin account, password stored as a hash.
+  setting, off by default. Admin accounts (passwords stored as hashes) can only be created on
+  the booth laptop at localhost; signing in works from any device.
 - Never overwrite the user's existing files or rules without asking. No secrets in the repo.

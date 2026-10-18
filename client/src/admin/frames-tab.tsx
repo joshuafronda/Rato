@@ -4,6 +4,7 @@ import { Button } from '../ui/button.tsx'
 import { Card } from '../ui/card.tsx'
 import { List, ListRow } from '../ui/list-row.tsx'
 import { Toggle } from '../ui/toggle.tsx'
+import { FrameDesignerCard } from './frame-designer-card.tsx'
 import { ActionError, LoadState } from './loading.tsx'
 import { useAction, useLoad } from './use-load.ts'
 
@@ -17,6 +18,7 @@ export function FramesTab() {
     <LoadState state={state}>
       {({ layouts, frames }) => (
         <div className="admin-grid">
+          <FrameDesignerCard layouts={layouts} onSaved={reload} />
           <UploadFrame layouts={layouts} onUploaded={reload} />
           <ActionError error={error} />
           {layouts.map((layout) => (
@@ -94,7 +96,7 @@ function UploadFrame({ layouts, onUploaded }: { layouts: AdminLayout[]; onUpload
   }
 
   return (
-    <Card title="Add a frame" label="Add a frame">
+    <Card title="Upload your own frame" label="Upload your own frame">
       <form className="card-form" onSubmit={submit}>
         <p className="caption">
           A PNG of 600 × 1800 pixels with see-through holes where the photos go. Leave the bottom free for the date and

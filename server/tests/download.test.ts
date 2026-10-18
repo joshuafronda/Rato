@@ -27,7 +27,7 @@ async function setup() {
   const storageDir = tempDir('rato-storage-')
   for (const folder of ['photos', 'strips', 'frames']) mkdirSync(join(storageDir, folder))
   const server = createApp({ db, storageDir })
-  const login = await request(server).post('/api/admin/setup').send({ username: 'host', password: 'correct horse' })
+  const login = await request(server).post('/api/admin/accounts').send({ username: 'host', password: 'correct horse' })
   const cookie = String(login.headers['set-cookie']).split(';')[0]
 
   const layoutId = Number(db.prepare('SELECT id FROM layouts WHERE shots = 2').get()?.id)

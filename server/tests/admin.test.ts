@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createApp } from '../app.ts'
 import type { Database } from '../db/connection.ts'
 import type { Request, Response } from 'express'
-import { setupOnLaptop } from '../routes/admin.ts'
+import { accountsOnLaptop } from '../routes/admin.ts'
 import { LoginLimiter } from '../services/admin-auth.ts'
 import { deleteExpiredSessions } from '../services/cleanup.ts'
 import { hashPassword, verifyPassword } from '../services/passwords.ts'
@@ -37,7 +37,7 @@ type Setup = ReturnType<typeof setup>
 
 // Creates the admin and returns the session cookie.
 async function signedIn({ server }: Setup): Promise<string> {
-  const res = await request(server).post('/api/admin/setup').send({ username: 'host', password: 'correct horse' })
+  const res = await request(server).post('/api/admin/accounts').send({ username: 'host', password: 'correct horse' })
   expect(res.status).toBe(201)
   return String(res.headers['set-cookie']).split(';')[0]
 }
@@ -71,33 +71,38 @@ describe('passwords', () => {
 })
 
 describe('admin sign-in', () => {
-  it('starts with setup, which works once and sets a strict HttpOnly cookie', async () => {
+  it('creates accounts with a strict HttpOnly cookie, and refuses a taken username', async () => {
     const s = setup()
     expect((await request(s.server).get('/api/admin/status')).body).toEqual({ setupNeeded: true, username: null })
-    const res = await request(s.server).post('/api/admin/setup').send({ username: 'host', password: 'correct horse' })
+    const res = await request(s.server).post('/api/admin/accounts').send({ username: 'host', password: 'correct horse' })
     expect(res.status).toBe(201)
     const cookie = String(res.headers['set-cookie'])
     expect(cookie).toMatch(/rato_admin=[\w-]{43};/)
     expect(cookie).toContain('HttpOnly')
     expect(cookie).toContain('SameSite=Strict')
-    const again = await request(s.server).post('/api/admin/setup').send({ username: 'other', password: 'another one' })
-    expect(again.status).toBe(409)
+    const taken = await request(s.server).post('/api/admin/accounts').send({ username: 'HOST', password: 'another one' })
+    expect(taken.status).toBe(409)
+    expect(taken.body).toEqual({ error: 'That username is taken' })
+    const second = await request(s.server).post('/api/admin/accounts').send({ username: 'helper', password: 'another one' })
+    expect(second.status).toBe(201)
+    const helper = await request(s.server).post('/api/admin/login').send({ username: 'helper', password: 'another one' })
+    expect(helper.status).toBe(200)
     const status = await request(s.server).get('/api/admin/status').set('Cookie', cookie.split(';')[0])
     expect(status.body).toEqual({ setupNeeded: false, username: 'host' })
   })
 
-  it('explains that setup must happen on the laptop when opened from another address', () => {
+  it('explains that accounts are created on the laptop when opened from another address', () => {
     const json = vi.fn()
     const res = { status: vi.fn(() => ({ json })) } as unknown as Response
     const next = vi.fn()
-    setupOnLaptop({ socket: { remoteAddress: '192.168.1.15' } } as Request, res, next)
+    accountsOnLaptop({ socket: { remoteAddress: '192.168.1.15' } } as Request, res, next)
     expect(next).not.toHaveBeenCalled()
     expect(res.status).toHaveBeenCalledWith(403)
     expect(json).toHaveBeenCalledWith({ error: expect.stringContaining('http://localhost:3000/admin') })
   })
 
   it('refuses a short password', async () => {
-    const res = await request(setup().server).post('/api/admin/setup').send({ username: 'host', password: 'short' })
+    const res = await request(setup().server).post('/api/admin/accounts').send({ username: 'host', password: 'short' })
     expect(res.status).toBe(400)
     expect(res.body).toEqual({ error: 'Choose a password of at least 8 characters' })
   })

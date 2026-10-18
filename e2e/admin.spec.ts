@@ -8,7 +8,7 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
   await admin.goto('/admin')
 
   await test.step('first run: create the admin account', async () => {
-    await expect(admin.getByRole('heading', { name: 'Create the admin account' })).toBeVisible()
+    await expect(admin.getByRole('heading', { name: 'Create an account' })).toBeVisible()
     await admin.getByLabel('Username').fill('host')
     await admin.getByLabel('Password').fill('correct horse')
     await admin.getByRole('button', { name: 'Create account' }).click()
@@ -25,11 +25,24 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
 
   await test.step('frames: upload a new frame for the 2-photo strip', async () => {
     await admin.getByRole('button', { name: 'Frames', exact: true }).click()
-    await admin.getByLabel('Layout').selectOption({ label: 'Classic duo' })
-    await admin.getByLabel('Name').fill('Gold')
-    await admin.getByLabel('Image (PNG)').setInputFiles({ name: 'gold.png', mimeType: 'image/png', buffer: transparentPng(600, 1800) })
-    await admin.getByRole('button', { name: 'Upload frame' }).click()
+    const upload = admin.getByRole('region', { name: 'Upload your own frame' })
+    await upload.getByLabel('Layout').selectOption({ label: 'Classic duo' })
+    await upload.getByLabel('Name').fill('Gold')
+    await upload.getByLabel('Image (PNG)').setInputFiles({ name: 'gold.png', mimeType: 'image/png', buffer: transparentPng(600, 1800) })
+    await upload.getByRole('button', { name: 'Upload frame' }).click()
     await expect(admin.getByRole('region', { name: 'Classic duo' }).getByText('Gold')).toBeVisible()
+  })
+
+  await test.step('frames: design a frame in any colour for every layout', async () => {
+    await admin.getByLabel('Frame name').fill('Mint')
+    await admin.getByLabel('Any colour').fill('#3ddc97')
+    await admin.getByRole('button', { name: 'Confetti' }).click()
+    await expect(admin.getByRole('img', { name: 'Frame preview' })).toBeVisible()
+    await admin.getByRole('button', { name: 'Save frame' }).click()
+    await expect(admin.getByText('Saved “Mint” for every layout.')).toBeVisible()
+    for (const layout of ['Classic duo', 'Triple strip', 'Four-shot strip']) {
+      await expect(admin.getByRole('region', { name: layout }).getByText('Mint')).toBeVisible()
+    }
   })
 
   await test.step('a guest makes and prints a strip with the new frame', async () => {
@@ -37,6 +50,7 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
     await page.goto('/')
     await page.getByRole('button', { name: 'Start' }).click()
     await page.getByRole('button', { name: /Classic duo/ }).click()
+    await expect(page.getByRole('button', { name: /Mint/ })).toBeVisible()
     await page.getByRole('button', { name: /Gold/ }).click()
     await page.getByRole('button', { name: 'Take the photos' }).click()
     await page.getByRole('button', { name: 'Start the countdown' }).click()

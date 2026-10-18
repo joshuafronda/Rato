@@ -13,9 +13,12 @@ export function AdminApp() {
     <main className="page admin">
       <LoadState state={state}>
         {(status) => {
-          if (status.setupNeeded) return <AdminTitle><SignInForm mode="setup" onSignedIn={reload} /></AdminTitle>
-          if (!status.username) return <AdminTitle><SignInForm mode="login" onSignedIn={reload} /></AdminTitle>
-          return <Dashboard username={status.username} onSignedOut={reload} />
+          if (status.username) return <Dashboard username={status.username} onSignedOut={reload} />
+          return (
+            <AdminTitle>
+              <SignInForm firstRun={status.setupNeeded} onSignedIn={reload} />
+            </AdminTitle>
+          )
         }}
       </LoadState>
     </main>

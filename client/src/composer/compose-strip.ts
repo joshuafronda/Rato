@@ -1,3 +1,4 @@
+import { canvasToBlob } from '../lib/canvas-to-blob.ts'
 import { filterCss, grainAmount } from './filter-style.ts'
 import { grainTile } from './grain.ts'
 import { STRIP, coverCrop, stripSlots } from './strip-layout.ts'
@@ -47,7 +48,7 @@ export async function composeStrip(request: StripRequest): Promise<Blob> {
       caption: request.caption,
       dateText: request.dateText,
     })
-    return await canvasToPng(canvas)
+    return await canvasToBlob(canvas, 'image/png')
   } finally {
     for (const shot of shots) shot.close()
   }
@@ -114,10 +115,4 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
     image.height = STRIP.height
   }
   return image
-}
-
-function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not encode the strip'))), 'image/png')
-  })
 }

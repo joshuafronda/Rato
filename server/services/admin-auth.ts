@@ -25,18 +25,19 @@ export interface Admin {
   username: string
 }
 
+// No account yet: the sign-in page opens on "Create an account".
 export function setupNeeded(db: Database): boolean {
   return countAdmins(db) === 0
 }
 
-// Creates the one admin account. Only possible while there is none.
-export function createFirstAdmin(db: Database, username: string, password: string): string {
-  if (!setupNeeded(db)) throw new RequestError(409, 'The admin account already exists')
+// Creates an admin account and signs it in. The route only allows this on the booth laptop.
+export function createAccount(db: Database, username: string, password: string): string {
   const name = username.trim()
   if (name.length < 1 || name.length > 40) throw new RequestError(400, 'Choose a username of 1 to 40 characters')
   if (password.length < MIN_PASSWORD_LENGTH) {
     throw new RequestError(400, `Choose a password of at least ${MIN_PASSWORD_LENGTH} characters`)
   }
+  if (findAdminByUsername(db, name)) throw new RequestError(409, 'That username is taken')
   const id = insertAdmin(db, name, hashPassword(password))
   return startSession(db, id)
 }

@@ -1,3 +1,5 @@
+import { canvasToBlob } from '../lib/canvas-to-blob.ts'
+
 export type FrameGrabber = (stream: MediaStream) => Promise<Blob>
 
 const SHOT_TYPE = 'image/jpeg'
@@ -19,19 +21,9 @@ export const grabFrame: FrameGrabber = async (stream) => {
     const context = canvas.getContext('2d')
     if (!context) throw new Error('Canvas 2D is not available')
     context.drawImage(video, 0, 0)
-    return await canvasToBlob(canvas)
+    return await canvasToBlob(canvas, SHOT_TYPE, SHOT_QUALITY)
   } finally {
     video.pause()
     video.srcObject = null
   }
-}
-
-function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error('Could not encode the shot'))),
-      SHOT_TYPE,
-      SHOT_QUALITY,
-    )
-  })
 }

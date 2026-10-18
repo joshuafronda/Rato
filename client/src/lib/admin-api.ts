@@ -1,6 +1,7 @@
 import { jsonPost, request } from './api.ts'
 
 export interface AdminStatus {
+  /** No account exists yet. */
   setupNeeded: boolean
   username: string | null
 }
@@ -77,7 +78,7 @@ export function downloadUrl(day: string | null, withPhotos: boolean): string {
 
 export const adminApi = {
   status: () => request<AdminStatus>(`${BASE}/status`),
-  setup: (username: string, password: string) => request<void>(`${BASE}/setup`, jsonPost({ username, password })),
+  createAccount: (username: string, password: string) => request<void>(`${BASE}/accounts`, jsonPost({ username, password })),
   login: (username: string, password: string) => request<void>(`${BASE}/login`, jsonPost({ username, password })),
   logout: () => request<void>(`${BASE}/logout`, { method: 'POST' }),
   overview: () => request<Overview>(`${BASE}/overview`),
