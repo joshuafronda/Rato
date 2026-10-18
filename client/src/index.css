@@ -987,6 +987,29 @@ h3 {
     height: 6in;
     display: block;
   }
+
+  /* A4: each strip lies on its side in a 6 x 2 inch row, five rows down the sheet. */
+  #print-root.print-sideways {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15in;
+  }
+
+  .print-sideways .print-slot {
+    position: relative;
+    width: 6in;
+    height: 2in;
+    /* The image's unrotated 2 x 6 box would spill onto a second page; the turned strip
+       fits this 6 x 2 box exactly. */
+    overflow: hidden;
+  }
+
+  .print-sideways .print-slot img {
+    position: absolute;
+    left: 2in;
+    top: -2in;
+    transform: rotate(-90deg);
+  }
 }
 
 .card-form {

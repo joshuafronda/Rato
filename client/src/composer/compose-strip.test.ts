@@ -38,6 +38,7 @@ describe('drawStrip', () => {
       grain: 0,
       grainTile: null,
       frame: picture('frame', 600, 1800),
+      slots: null,
       caption: 'Knowing Christ More!',
       caption2: 'JTFFC Batangas City',
       dateText: 'Oct 7, 2026',
@@ -72,6 +73,7 @@ describe('drawStrip', () => {
       grain: 0.25,
       grainTile: picture('grain', 128, 128) as unknown as HTMLCanvasElement,
       frame: null,
+      slots: null,
       caption: '',
       caption2: '',
       dateText: '',
@@ -79,5 +81,26 @@ describe('drawStrip', () => {
     expect(log.filter((entry) => entry === 'globalAlpha=0.25')).toHaveLength(3)
     expect(log.filter((entry) => entry.startsWith('fillText'))).toEqual([])
     expect(log.filter((entry) => entry.startsWith('drawImage'))).toHaveLength(3)
+  })
+
+  it("puts the photos in the frame's own windows when it has them", () => {
+    const { context, log } = recordingContext()
+    const windows = [
+      { x: 19, y: 216, width: 563, height: 394 },
+      { x: 19, y: 631, width: 563, height: 394 },
+    ]
+    drawStrip(context, {
+      shots: [picture('shot1'), picture('shot2')],
+      filterCss: 'none',
+      grain: 0,
+      grainTile: null,
+      frame: picture('frame', 600, 1800),
+      slots: windows,
+      caption: '',
+      caption2: '',
+      dateText: '',
+    })
+    expect(log.find((entry) => entry.startsWith('drawImage(shot1'))).toMatch(/, 19, 216, 563, 394\)$/)
+    expect(log.find((entry) => entry.startsWith('drawImage(shot2'))).toMatch(/, 19, 631, 563, 394\)$/)
   })
 })

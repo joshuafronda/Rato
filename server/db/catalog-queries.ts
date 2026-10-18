@@ -12,6 +12,8 @@ export interface FrameRow {
   layout_id: number
   name: string
   image_path: string
+  slots: string | null
+  show_text: number
 }
 
 export interface FilterRow {
@@ -36,7 +38,7 @@ export function findActiveLayout(db: Database, id: number): LayoutRow | undefine
 export function listActiveFrames(db: Database, layoutId: number): FrameRow[] {
   return db
     .prepare(
-      `SELECT id, layout_id, name, image_path FROM frames
+      `SELECT id, layout_id, name, image_path, slots, show_text FROM frames
        WHERE layout_id = ? AND active = 1 ORDER BY sort_order, id`,
     )
     .all(layoutId) as unknown as FrameRow[]
@@ -44,7 +46,7 @@ export function listActiveFrames(db: Database, layoutId: number): FrameRow[] {
 
 export function findActiveFrame(db: Database, id: number): FrameRow | undefined {
   return db
-    .prepare('SELECT id, layout_id, name, image_path FROM frames WHERE id = ? AND active = 1')
+    .prepare('SELECT id, layout_id, name, image_path, slots, show_text FROM frames WHERE id = ? AND active = 1')
     .get(id) as unknown as FrameRow | undefined
 }
 

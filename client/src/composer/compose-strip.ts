@@ -1,6 +1,7 @@
 import { canvasToBlob } from '../lib/canvas-to-blob.ts'
 import { filterCss, grainAmount } from './filter-style.ts'
 import { grainTile } from './grain.ts'
+import type { Slot } from '../lib/booth-types.ts'
 import { STRIP, coverCrop, stripSlots } from './strip-layout.ts'
 
 /** Anything drawable that knows its own size: an ImageBitmap, a decoded <img>. */
@@ -12,6 +13,8 @@ export interface StripDrawing {
   grain: number
   grainTile: HTMLCanvasElement | null
   frame: Picture | null
+  /** Where the photos go: the frame's own windows, or null for the layout's standard holes. */
+  slots: Slot[] | null
   caption: string
   caption2: string
   dateText: string
@@ -21,6 +24,7 @@ export interface StripRequest {
   shots: Blob[]
   filterParams: Record<string, number>
   frameUrl: string | null
+  slots: Slot[] | null
   caption: string
   caption2: string
   dateText: string
@@ -48,6 +52,7 @@ export async function composeStrip(request: StripRequest): Promise<Blob> {
       grain: grainAmount(request.filterParams),
       grainTile: grainTile(),
       frame,
+      slots: request.slots,
       caption: request.caption,
       caption2: request.caption2,
       dateText: request.dateText,
@@ -62,7 +67,7 @@ export function drawStrip(context: CanvasRenderingContext2D, drawing: StripDrawi
   context.fillStyle = BACKGROUND
   context.fillRect(0, 0, STRIP.width, STRIP.height)
 
-  const slots = stripSlots(drawing.shots.length)
+  const slots = drawing.slots ?? stripSlots(drawing.shots.length)
   drawing.shots.forEach((shot, i) => {
     const slot = slots[i]
     const { sx, sy, sw, sh } = coverCrop(shot.width, shot.height, slot.width, slot.height)

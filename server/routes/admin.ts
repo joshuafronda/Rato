@@ -1,4 +1,5 @@
 import express, { type Request, type RequestHandler, Router } from 'express'
+import type { FrameChanges } from '../db/admin-queries.ts'
 import type { Database } from '../db/connection.ts'
 import {
   adminFilters,
@@ -102,14 +103,17 @@ export function adminRouter({ db, storageDir, backupDir }: AdminRouterOptions): 
     if (layoutId === null) return badRequest(res, 'Choose a layout for the frame')
     const name = typeof req.query.name === 'string' ? req.query.name : ''
     if (!Buffer.isBuffer(req.body)) throw new RequestError(415, 'Upload the frame as a PNG image')
-    res.status(201).json({ id: uploadFrame(db, storageDir, layoutId, name, req.body) })
+    const slots = typeof req.query.slots === 'string' ? parseJson(req.query.slots) : null
+    const showText = req.query.text !== '0'
+    res.status(201).json({ id: uploadFrame(db, storageDir, { layoutId, name, image: req.body, slots, showText }) })
   })
 
   router.patch('/frames/:id', (req, res) => {
     const body = objectBody(req.body)
-    const changes: { name?: string; active?: boolean } = {}
+    const changes: FrameChanges = {}
     if ('name' in body) changes.name = stringField(body, 'name')
     if ('active' in body) changes.active = booleanField(body, 'active')
+    if ('showText' in body) changes.showText = booleanField(body, 'showText')
     changeFrame(db, idParam(req), changes)
     res.json({ ok: true })
   })
@@ -245,6 +249,14 @@ function stringField(body: Record<string, unknown>, name: string): string {
   const value = body[name]
   if (typeof value !== 'string') throw new RequestError(400, `${name} must be text`)
   return value
+}
+
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new RequestError(400, 'The photo windows are not valid JSON')
+  }
 }
 
 function credentials(body: unknown): { username: string; password: string } {

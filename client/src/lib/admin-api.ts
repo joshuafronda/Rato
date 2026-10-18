@@ -1,4 +1,5 @@
 import { jsonPost, request } from './api.ts'
+import type { Frame, PrintPaper, Slot } from './booth-types.ts'
 
 export interface AdminStatus {
   /** No account exists yet. */
@@ -21,11 +22,7 @@ export interface AdminLayout {
   active: boolean
 }
 
-export interface AdminFrame {
-  id: number
-  layoutId: number
-  name: string
-  imageUrl: string
+export interface AdminFrame extends Frame {
   active: boolean
   sortOrder: number
 }
@@ -61,7 +58,7 @@ export interface AdminSettings {
   captionLine2: string
   dateFormat: string
   printer: string
-  printPaper: '4x6' | '2x6'
+  printPaper: PrintPaper
   galleryEnabled: boolean
   autoDeleteDays: number
 }
@@ -86,13 +83,17 @@ export const adminApi = {
   layouts: () => request<AdminLayout[]>(`${BASE}/layouts`),
   setLayoutActive: (id: number, active: boolean) => request<void>(`${BASE}/layouts/${id}`, jsonPost({ active }, 'PATCH')),
   frames: () => request<AdminFrame[]>(`${BASE}/frames`),
-  uploadFrame: (layoutId: number, name: string, image: Blob) =>
-    request<{ id: number }>(`${BASE}/frames?layoutId=${layoutId}&name=${encodeURIComponent(name)}`, {
+  uploadFrame: (layoutId: number, name: string, image: Blob, options: { slots?: Slot[]; showText?: boolean } = {}) => {
+    const query = new URLSearchParams({ layoutId: String(layoutId), name })
+    if (options.slots) query.set('slots', JSON.stringify(options.slots))
+    if (options.showText === false) query.set('text', '0')
+    return request<{ id: number }>(`${BASE}/frames?${query}`, {
       method: 'POST',
       headers: { 'Content-Type': 'image/png' },
       body: image,
-    }),
-  updateFrame: (id: number, changes: { name?: string; active?: boolean }) =>
+    })
+  },
+  updateFrame: (id: number, changes: { name?: string; active?: boolean; showText?: boolean }) =>
     request<void>(`${BASE}/frames/${id}`, jsonPost(changes, 'PATCH')),
   reorderFrames: (layoutId: number, ids: number[]) => request<void>(`${BASE}/frames/reorder`, jsonPost({ layoutId, ids })),
   filters: () => request<AdminFilter[]>(`${BASE}/filters`),

@@ -29,7 +29,14 @@ describe('GET /api/frames', () => {
     expect(res.status).toBe(200)
     expect(res.body.length).toBeGreaterThan(0)
     for (const frame of res.body) {
-      expect(frame).toEqual({ id: expect.any(Number), layoutId: layout?.id, name: expect.any(String), imageUrl: expect.stringMatching(/^\/frames\/[a-z0-9-]+\.svg$/) })
+      expect(frame).toEqual({
+        id: expect.any(Number),
+        layoutId: layout?.id,
+        name: expect.any(String),
+        imageUrl: expect.stringMatching(/^\/frames\/[a-z0-9-]+\.svg$/),
+        slots: null,
+        showText: true,
+      })
     }
   })
 

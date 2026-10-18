@@ -3,7 +3,7 @@ import type { Filter, Frame, Layout } from '../lib/booth-types.ts'
 import { type FlowState, boothFlow, initialFlow } from './booth-flow.ts'
 
 const layout: Layout = { id: 1, name: 'Classic duo', shots: 2, orientation: 'vertical' }
-const frame: Frame = { id: 5, layoutId: 1, name: 'Classic', imageUrl: '/frames/a.svg' }
+const frame: Frame = { id: 5, layoutId: 1, name: 'Classic', imageUrl: '/frames/a.svg', slots: null, showText: true }
 const natural: Filter = { id: 1, name: 'Natural', params: {}, isDefault: true }
 const warm: Filter = { id: 2, name: 'Warm', params: { sepia: 0.2 }, isDefault: false }
 const shot = (name: string) => new Blob([name], { type: 'image/jpeg' })

@@ -195,6 +195,36 @@ describe('admin dashboard', () => {
     expect((await upload(pngOfSize(600, 1800), 'image/png', '')).status).toBe(400)
   })
 
+  it('keeps a frame with its own photo windows and without the date and captions', async () => {
+    const s = setup()
+    const cookie = await signedIn(s)
+    const layoutId = idOf(s.db, 'SELECT id FROM layouts WHERE shots = 3')
+    const windows = [
+      { x: 19, y: 216, width: 563, height: 394 },
+      { x: 19, y: 631, width: 563, height: 394 },
+      { x: 19, y: 1124, width: 563, height: 394 },
+    ]
+    const upload = (slots: unknown, text = '0') =>
+      request(s.server)
+        .post(`/api/admin/frames?layoutId=${layoutId}&name=Church&text=${text}&slots=${encodeURIComponent(JSON.stringify(slots))}`)
+        .set('Cookie', cookie)
+        .set('Content-Type', 'image/png')
+        .send(pngOfSize(600, 1800))
+
+    const res = await upload(windows)
+    expect(res.status).toBe(201)
+    const frame = (await request(s.server).get(`/api/frames?layoutId=${layoutId}`)).body.find((f: { id: number }) => f.id === res.body.id)
+    expect(frame).toMatchObject({ name: 'Church', slots: windows, showText: false })
+
+    expect((await upload(windows.slice(0, 2))).status).toBe(400)
+    expect((await upload([...windows.slice(0, 2), { x: 300, y: 1700, width: 563, height: 394 }])).status).toBe(400)
+    expect((await upload('nonsense')).status).toBe(400)
+
+    await request(s.server).patch(`/api/admin/frames/${res.body.id}`).set('Cookie', cookie).send({ showText: true })
+    const after = (await request(s.server).get(`/api/frames?layoutId=${layoutId}`)).body.find((f: { id: number }) => f.id === res.body.id)
+    expect(after.showText).toBe(true)
+  })
+
   it('turns frames and layouts off and reorders frames', async () => {
     const s = setup()
     const cookie = await signedIn(s)
@@ -286,7 +316,8 @@ describe('admin dashboard', () => {
     expect(saved.body).toMatchObject({ countdownSeconds: 5, captionText: 'Ana & Ben', galleryEnabled: false, printPaper: '2x6' })
     expect((await request(s.server).get('/api/booth-settings')).body).toMatchObject({ countdownSeconds: 5, captionText: 'Ana & Ben' })
 
-    for (const bad of [{ countdownSeconds: 0 }, { autoDeleteDays: 400 }, { captionText: 'x'.repeat(41) }, { printPaper: 'A4' }, { nope: 1 }]) {
+    expect((await request(s.server).put('/api/admin/settings').set('Cookie', cookie).send({ printPaper: 'A4' })).body.printPaper).toBe('A4')
+    for (const bad of [{ countdownSeconds: 0 }, { autoDeleteDays: 400 }, { captionText: 'x'.repeat(41) }, { printPaper: 'A3' }, { nope: 1 }]) {
       const res = await request(s.server).put('/api/admin/settings').set('Cookie', cookie).send(bad)
       expect(res.status, JSON.stringify(bad)).toBe(400)
     }

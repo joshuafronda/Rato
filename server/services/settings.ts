@@ -1,5 +1,6 @@
 import { readAllSettings, writeSettings } from '../db/admin-queries.ts'
 import type { Database } from '../db/connection.ts'
+import { type PrintPaper, printPaper } from './catalog.ts'
 import { RequestError } from './request-error.ts'
 
 export interface Settings {
@@ -8,7 +9,7 @@ export interface Settings {
   captionLine2: string
   dateFormat: string
   printer: string
-  printPaper: '4x6' | '2x6'
+  printPaper: PrintPaper
   galleryEnabled: boolean
   autoDeleteDays: number
 }
@@ -36,9 +37,11 @@ const FIELDS: Record<keyof Settings, Field> = {
   printer: { key: 'printer', read: (value) => value ?? '', write: (value) => text(value, 100, 'printer name') },
   printPaper: {
     key: 'print_paper',
-    read: (value) => (value === '2x6' ? '2x6' : '4x6'),
+    read: (value) => printPaper(value),
     write: (value) => {
-      if (value !== '4x6' && value !== '2x6') throw new RequestError(400, 'Print paper must be 4x6 or 2x6')
+      if (typeof value !== 'string' || printPaper(value) !== value) {
+        throw new RequestError(400, 'Print paper must be 4x6, 2x6 or A4')
+      }
       return value
     },
   },

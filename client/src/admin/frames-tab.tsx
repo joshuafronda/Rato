@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react'
 import { type AdminFrame, type AdminLayout, adminApi } from '../lib/admin-api.ts'
+import { type PhotoWindow, photoWindowsOf } from '../lib/photo-windows.ts'
+import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import { Card } from '../ui/card.tsx'
 import { List, ListRow } from '../ui/list-row.tsx'
@@ -64,6 +66,11 @@ function LayoutSection({ layout, frames, run }: LayoutSectionProps) {
               checked={frame.active}
               onChange={(event) => void run(() => adminApi.updateFrame(frame.id, { active: event.target.checked }))}
             />
+            <Toggle
+              label="Date & captions"
+              checked={frame.showText}
+              onChange={(event) => void run(() => adminApi.updateFrame(frame.id, { showText: event.target.checked }))}
+            />
             <Button variant="secondary" size="sm" disabled={index === 0} onClick={() => move(index, -1)}>
               Up
             </Button>
@@ -81,16 +88,34 @@ function UploadFrame({ layouts, onUploaded }: { layouts: AdminLayout[]; onUpload
   const [layoutId, setLayoutId] = useState(layouts[0]?.id ?? 0)
   const [name, setName] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const [windows, setWindows] = useState<PhotoWindow[]>([])
+  const [showText, setShowText] = useState(true)
   const { run, error } = useAction(onUploaded)
+  const layout = layouts.find((candidate) => candidate.id === layoutId)
+
+  // Finds the frame's see-through windows as soon as a file is picked. A frame with its own
+  // windows usually carries its own text too, so the date and captions start off then.
+  const chooseFile = (chosen: File | null) => {
+    setFile(chosen)
+    setWindows([])
+    setShowText(true)
+    if (!chosen) return
+    void run(async () => {
+      const found = await photoWindowsOf(chosen)
+      setWindows(found)
+      setShowText(found.length === 0)
+    })
+  }
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault()
     if (!file) return
     const form = event.currentTarget as HTMLFormElement
     void run(async () => {
-      await adminApi.uploadFrame(layoutId, name, file)
+      const slots = windows.length > 0 ? windows : undefined
+      await adminApi.uploadFrame(layoutId, name, file, { slots, showText })
       setName('')
-      setFile(null)
+      chooseFile(null)
       form.reset()
     })
   }
@@ -99,15 +124,15 @@ function UploadFrame({ layouts, onUploaded }: { layouts: AdminLayout[]; onUpload
     <Card title="Upload your own frame" label="Upload your own frame">
       <form className="card-form" onSubmit={submit}>
         <p className="caption">
-          A PNG of 600 × 1800 pixels with see-through holes where the photos go. Leave the bottom free for the date and
-          caption.
+          A PNG of 600 × 1800 pixels (or any 1:3 size) with see-through windows where the photos go, one per photo. The
+          photos are placed in your windows, wherever they are.
         </p>
         <label className="field">
           Layout
           <select value={layoutId} onChange={(event) => setLayoutId(Number(event.target.value))}>
-            {layouts.map((layout) => (
-              <option key={layout.id} value={layout.id}>
-                {layout.name}
+            {layouts.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
               </option>
             ))}
           </select>
@@ -118,13 +143,25 @@ function UploadFrame({ layouts, onUploaded }: { layouts: AdminLayout[]; onUpload
         </label>
         <label className="field">
           Image (PNG)
-          <input type="file" accept="image/png" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
+          <input type="file" accept="image/png" onChange={(event) => chooseFile(event.target.files?.[0] ?? null)} required />
         </label>
+        {file && <WindowsFound found={windows.length} needed={layout?.shots ?? 0} />}
+        <Toggle label="Add the date and caption lines" checked={showText} onChange={(event) => setShowText(event.target.checked)} />
         <ActionError error={error} />
         <Button type="submit" icon="frame">
           Upload frame
         </Button>
       </form>
     </Card>
+  )
+}
+
+function WindowsFound({ found, needed }: { found: number; needed: number }) {
+  if (found === 0) return <Badge tone="neutral">No see-through windows found: the standard photo holes are used</Badge>
+  if (found === needed) return <Badge tone="success">Found {found} photo windows</Badge>
+  return (
+    <Badge tone="danger">
+      Found {found} photo windows, but this layout takes {needed} photos
+    </Badge>
   )
 }

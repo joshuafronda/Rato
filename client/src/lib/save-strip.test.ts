@@ -16,16 +16,19 @@ vi.mock('./api.ts', () => ({
   }),
 }))
 vi.mock('../composer/compose-strip.ts', () => ({
-  composeStrip: vi.fn(async (request: { caption: string; caption2: string; dateText: string; frameUrl: string | null }) => {
-    calls.push(`compose ${request.frameUrl} "${request.dateText}" "${request.caption}" "${request.caption2}"`)
-    return new Blob(['png'], { type: 'image/png' })
-  }),
+  composeStrip: vi.fn(
+    async (request: { caption: string; caption2: string; dateText: string; frameUrl: string | null; slots: unknown }) => {
+      calls.push(`compose ${request.frameUrl} "${request.dateText}" "${request.caption}" "${request.caption2}"`)
+      if (request.slots) calls.push(`slots ${JSON.stringify(request.slots)}`)
+      return new Blob(['png'], { type: 'image/png' })
+    },
+  ),
 }))
 
 const { saveStrip } = await import('./save-strip.ts')
 
 const layout: Layout = { id: 1, name: 'Classic duo', shots: 2, orientation: 'vertical' }
-const frame: Frame = { id: 5, layoutId: 1, name: 'Classic', imageUrl: '/frames/a.svg' }
+const frame: Frame = { id: 5, layoutId: 1, name: 'Classic', imageUrl: '/frames/a.svg', slots: null, showText: true }
 const filter: Filter = { id: 3, name: 'Warm', params: { sepia: 0.2 }, isDefault: false }
 const shots = [new Blob(['a']), new Blob(['b'])]
 
@@ -70,5 +73,19 @@ describe('saveStrip', () => {
     })
     expect(calls[0]).toBe('compose null "" "" ""')
     expect(calls[1]).toBe('session {"layoutId":1,"frameId":null,"filterId":3}')
+  })
+
+  it('uses a frame\'s own windows, and leaves out the text when the frame has its own', async () => {
+    const windows = [{ x: 19, y: 216, width: 563, height: 394 }]
+    await saveStrip({
+      layout,
+      frame: { ...frame, slots: windows, showText: false },
+      filter,
+      shots,
+      settings: { countdownSeconds: 3, captionText: 'Line', captionLine2: 'Two', dateFormat: 'MMM d, yyyy', printPaper: 'A4' },
+      date: new Date(2026, 9, 7),
+    })
+    expect(calls[0]).toBe('compose /frames/a.svg "" "" ""')
+    expect(calls[1]).toBe(`slots ${JSON.stringify(windows)}`)
   })
 })

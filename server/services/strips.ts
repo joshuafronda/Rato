@@ -13,6 +13,7 @@ import {
   type SessionRow,
   savePhoto,
 } from '../db/strip-queries.ts'
+import { withDpi } from './png-dpi.ts'
 import { RequestError } from './request-error.ts'
 
 export interface SessionChoices {
@@ -34,6 +35,9 @@ export interface Strip extends SavedStrip {
 const SHARE_CODE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'
 const SHARE_CODE_LENGTH = 10
 export const SHARE_CODE_PATTERN = /^[a-z2-9]{10}$/
+
+// The 600 x 1800 strip is a 2 x 6 inch print at this resolution.
+const STRIP_DPI = 300
 
 type ImageType = 'jpg' | 'png'
 
@@ -61,7 +65,8 @@ export function savePhotoFile(db: Database, storageDir: string, sessionId: numbe
   if (previous && previous !== fileName) rmSync(join(storageDir, 'photos', previous), { force: true })
 }
 
-// Saves the composed strip, private until the guest chooses to share it.
+// Saves the composed strip, private until the guest chooses to share it. The file is marked
+// 300 dpi, so a downloaded strip opens and prints at 2 x 6 inches.
 export function saveStripFile(db: Database, storageDir: string, sessionId: number, image: Buffer): SavedStrip {
   const session = openSession(db, sessionId)
   if (countPhotos(db, sessionId) < session.shots) throw new RequestError(409, 'Upload every shot first')
@@ -70,7 +75,7 @@ export function saveStripFile(db: Database, storageDir: string, sessionId: numbe
   const shareCode = newShareCode()
   const fileName = `${shareCode}.png`
   const filePath = join(storageDir, 'strips', fileName)
-  writeFileSync(filePath, image)
+  writeFileSync(filePath, withDpi(image, STRIP_DPI))
   try {
     insertStrip(db, sessionId, fileName, shareCode)
   } catch (error) {

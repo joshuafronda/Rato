@@ -19,6 +19,8 @@ export interface AdminFrameRow {
   layout_id: number
   name: string
   image_path: string
+  slots: string | null
+  show_text: number
   active: number
   sort_order: number
 }
@@ -134,25 +136,50 @@ export function setLayoutActive(db: Database, id: number, active: boolean): bool
 
 export function listAllFrames(db: Database): AdminFrameRow[] {
   return db
-    .prepare('SELECT id, layout_id, name, image_path, active, sort_order FROM frames ORDER BY layout_id, sort_order, id')
+    .prepare(
+      'SELECT id, layout_id, name, image_path, slots, show_text, active, sort_order FROM frames ORDER BY layout_id, sort_order, id',
+    )
     .all() as unknown as AdminFrameRow[]
 }
 
-export function insertFrame(db: Database, layoutId: number, name: string, imagePath: string): number {
+export interface NewFrame {
+  layoutId: number
+  name: string
+  imagePath: string
+  /** JSON photo windows, or null for the layout's standard holes. */
+  slots: string | null
+  showText: boolean
+}
+
+export function insertFrame(db: Database, frame: NewFrame): number {
   const result = db
     .prepare(
-      `INSERT INTO frames (layout_id, name, image_path, sort_order)
-       VALUES (?, ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM frames WHERE layout_id = ?))`,
+      `INSERT INTO frames (layout_id, name, image_path, slots, show_text, sort_order)
+       VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM frames WHERE layout_id = ?))`,
     )
-    .run(layoutId, name, imagePath, layoutId)
+    .run(frame.layoutId, frame.name, frame.imagePath, frame.slots, Number(frame.showText), frame.layoutId)
   return Number(result.lastInsertRowid)
 }
 
-export function updateFrame(db: Database, id: number, changes: { name?: string; active?: boolean }): boolean {
+export interface FrameChanges {
+  name?: string
+  active?: boolean
+  showText?: boolean
+}
+
+export function updateFrame(db: Database, id: number, changes: FrameChanges): boolean {
   const result = db
-    .prepare('UPDATE frames SET name = COALESCE(?, name), active = COALESCE(?, active) WHERE id = ?')
-    .run(changes.name ?? null, changes.active === undefined ? null : Number(changes.active), id)
+    .prepare(
+      `UPDATE frames SET name = COALESCE(?, name), active = COALESCE(?, active), show_text = COALESCE(?, show_text)
+       WHERE id = ?`,
+    )
+    .run(changes.name ?? null, optionalFlag(changes.active), optionalFlag(changes.showText), id)
   return Number(result.changes) > 0
+}
+
+// A boolean change as 1/0 for SQLite, or null to keep the stored value.
+function optionalFlag(value: boolean | undefined): number | null {
+  return value === undefined ? null : Number(value)
 }
 
 export function frameIdsForLayout(db: Database, layoutId: number): number[] {

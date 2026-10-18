@@ -20,11 +20,12 @@ import {
   setFrameOrder,
   setLayoutActive,
   setStripPublicById,
+  type FrameChanges,
   updateFrame,
 } from '../db/admin-queries.ts'
 import { insertPrintJob } from '../db/strip-queries.ts'
 import type { Database } from '../db/connection.ts'
-import { toFrame } from './catalog.ts'
+import { type Slot, toFrame } from './catalog.ts'
 import { removeSession } from './cleanup.ts'
 import { RequestError } from './request-error.ts'
 import { stripImageUrl } from './strips.ts'
@@ -56,12 +57,28 @@ export function adminFrames(db: Database) {
   return listAllFrames(db).map((row) => ({ ...toFrame(row), active: row.active === 1, sortOrder: row.sort_order }))
 }
 
+export interface FrameUpload {
+  layoutId: number
+  name: string
+  image: Buffer
+  /** Photo windows found in the PNG, or null to use the layout's standard holes. */
+  slots: unknown
+  showText: boolean
+}
+
+const STRIP_WIDTH = 600
+const STRIP_HEIGHT = 1800
+const MIN_WINDOW = 50
+
 // A new frame: a PNG with see-through holes for the shots, in the strip's 1:3 shape
 // (600 x 1800 is exact). SVG is refused: it can carry scripts.
-export function uploadFrame(db: Database, storageDir: string, layoutId: number, name: string, image: Buffer): number {
-  const cleanName = name.trim()
+export function uploadFrame(db: Database, storageDir: string, upload: FrameUpload): number {
+  const { layoutId, image } = upload
+  const cleanName = upload.name.trim()
   if (cleanName.length < 1 || cleanName.length > 40) throw new RequestError(400, 'Give the frame a name of 1 to 40 characters')
-  if (!adminLayouts(db).some((layout) => layout.id === layoutId)) throw new RequestError(400, 'Choose a layout for the frame')
+  const layout = adminLayouts(db).find((candidate) => candidate.id === layoutId)
+  if (!layout) throw new RequestError(400, 'Choose a layout for the frame')
+  const slots = upload.slots === null ? null : photoWindows(upload.slots, layout.shots)
   const size = pngSize(image)
   if (!size) throw new RequestError(415, 'Upload the frame as a PNG image')
   if (Math.abs(size.height / size.width - 3) > 0.03) {
@@ -71,14 +88,15 @@ export function uploadFrame(db: Database, storageDir: string, layoutId: number, 
   const path = join(storageDir, 'frames', fileName)
   writeFileSync(path, image)
   try {
-    return insertFrame(db, layoutId, cleanName, fileName)
+    const savedSlots = slots === null ? null : JSON.stringify(slots)
+    return insertFrame(db, { layoutId, name: cleanName, imagePath: fileName, slots: savedSlots, showText: upload.showText })
   } catch (error) {
     rmSync(path, { force: true })
     throw error
   }
 }
 
-export function changeFrame(db: Database, id: number, changes: { name?: string; active?: boolean }): void {
+export function changeFrame(db: Database, id: number, changes: FrameChanges): void {
   if (changes.name !== undefined && (changes.name.trim().length < 1 || changes.name.trim().length > 40)) {
     throw new RequestError(400, 'Give the frame a name of 1 to 40 characters')
   }
@@ -153,6 +171,27 @@ export function reprint(db: Database, id: number): number {
   const job = findPrintJob(db, id)
   if (!job) throw new RequestError(404, 'Print job not found')
   return insertPrintJob(db, job.strip_id, job.copies)
+}
+
+// The photo windows sent with a frame: one per shot, whole pixels, inside the strip.
+function photoWindows(value: unknown, shots: number): Slot[] {
+  if (!Array.isArray(value) || value.length !== shots) {
+    throw new RequestError(400, `This layout takes ${shots} photos, so the frame needs ${shots} see-through windows`)
+  }
+  return value.map((window: unknown) => {
+    const { x, y, width, height } = (typeof window === 'object' && window !== null ? window : {}) as Record<string, unknown>
+    const numbers = [x, y, width, height]
+    const valid =
+      numbers.every((n) => Number.isInteger(n)) &&
+      (x as number) >= 0 &&
+      (y as number) >= 0 &&
+      (width as number) >= MIN_WINDOW &&
+      (height as number) >= MIN_WINDOW &&
+      (x as number) + (width as number) <= STRIP_WIDTH &&
+      (y as number) + (height as number) <= STRIP_HEIGHT
+    if (!valid) throw new RequestError(400, 'A photo window is outside the strip or too small')
+    return { x, y, width, height } as Slot
+  })
 }
 
 // Width and height from a PNG's header, or null if it is not a PNG.

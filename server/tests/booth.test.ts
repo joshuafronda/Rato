@@ -159,6 +159,21 @@ describe('POST /api/sessions/:id/strip', () => {
     expect(readFileSync(join(b.storageDir, 'strips', `${shareCode}.png`))).toEqual(PNG)
   })
 
+  it('marks the saved strip as a 300 dpi (2 x 6 inch) print', async () => {
+    const b = booth()
+    const id = await startSession(b)
+    await uploadPhoto(b, id, 1)
+    await uploadPhoto(b, id, 2)
+    const header = Buffer.alloc(13)
+    header.writeUInt32BE(600, 0)
+    header.writeUInt32BE(1800, 4)
+    const ihdr = Buffer.concat([Buffer.from([0, 0, 0, 13]), Buffer.from('IHDR'), header, Buffer.alloc(4)])
+    const res = await uploadStrip(b, id, Buffer.concat([PNG.subarray(0, 8), ihdr]))
+    const saved = readFileSync(join(b.storageDir, 'strips', `${res.body.shareCode}.png`))
+    expect(saved.toString('ascii', 37, 41)).toBe('pHYs')
+    expect(saved.readUInt32BE(41)).toBe(11811)
+  })
+
   it('needs every shot first, and only once', async () => {
     const b = booth()
     const id = await startSession(b)

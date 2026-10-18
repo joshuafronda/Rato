@@ -74,8 +74,12 @@ Full spec: `Build - Specs/prompt.md`.
 - Admin: open http://localhost:3000/admin on the booth laptop and choose "Create an account"
   (only possible from the laptop). After that, sign in from any phone at
   http://<laptop-ip>:3000/admin. Backups go to `backups/` (set BACKUP_DIR to change it).
-- Print paper is the `print_paper` setting: `4x6` (two strips side by side, cut in half) or
-  `2x6`. Set the photo printer as the Windows default printer.
+- Print paper is the `print_paper` setting: `4x6` (two strips side by side, cut in half),
+  `2x6`, or `A4` (five strips turned sideways). Set the printer as the Windows default
+  printer. Saved strips are 600 x 1800 px marked 300 dpi, so they print at 2 x 6 inches.
+- Frames: a PNG frame's see-through windows are found on upload and the photos go exactly
+  there; "Date & captions" can be turned off for frames that carry their own text. The
+  event frame is `event-frames/knowing-christ-more.png` (Triple strip).
 - **Nothing deploys unless the user says "deploy" for this change.**
 - Uploaded is not live. Use the changed feature on the real booth and report what was verified
   and what the user still needs to check.

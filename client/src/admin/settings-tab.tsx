@@ -70,6 +70,7 @@ function SettingsForm({ saved }: { saved: AdminSettings }) {
         <select value={form.printPaper} onChange={(event) => set('printPaper', event.target.value as AdminSettings['printPaper'])}>
           <option value="4x6">4×6 photo paper (two strips, cut in half)</option>
           <option value="2x6">2×6 strip paper</option>
+          <option value="A4">A4 paper (five strips, sideways)</option>
         </select>
       </label>
       <label className="field">

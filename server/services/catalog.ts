@@ -28,6 +28,17 @@ export interface Frame {
   layoutId: number
   name: string
   imageUrl: string
+  /** The frame's own photo windows, or null for the layout's standard holes. */
+  slots: Slot[] | null
+  /** Draw the date and caption lines on this frame. */
+  showText: boolean
+}
+
+export interface Slot {
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 export interface Filter {
@@ -45,7 +56,8 @@ export interface BoothSettings {
   printPaper: PrintPaper
 }
 
-export type PrintPaper = '4x6' | '2x6'
+export type PrintPaper = '4x6' | '2x6' | 'A4'
+const PRINT_PAPERS: readonly PrintPaper[] = ['4x6', '2x6', 'A4']
 
 const DEFAULT_COUNTDOWN_SECONDS = 3
 
@@ -69,8 +81,13 @@ export function boothSettings(db: Database): BoothSettings {
     captionText: settings.get('caption_text') ?? '',
     captionLine2: settings.get('caption_line2') ?? '',
     dateFormat: settings.get('date_format') ?? '',
-    printPaper: settings.get('print_paper') === '2x6' ? '2x6' : '4x6',
+    printPaper: printPaper(settings.get('print_paper')),
   }
+}
+
+// The stored print_paper setting, or 4x6 when it is missing or unknown.
+export function printPaper(value: string | undefined): PrintPaper {
+  return PRINT_PAPERS.find((paper) => paper === value) ?? '4x6'
 }
 
 // Copies the built-in frames into storage/frames/ unless they are already there, so a frame
@@ -92,6 +109,8 @@ export function toFrame(row: FrameRow): Frame {
     layoutId: row.layout_id,
     name: row.name,
     imageUrl: `${FRAMES_URL}/${encodeURIComponent(row.image_path)}`,
+    slots: row.slots === null ? null : (JSON.parse(row.slots) as Slot[]),
+    showText: row.show_text === 1,
   }
 }
 

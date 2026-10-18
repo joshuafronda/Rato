@@ -11,6 +11,17 @@ export interface Frame {
   layoutId: number
   name: string
   imageUrl: string
+  /** The frame's own photo windows, or null for the layout's standard holes. */
+  slots: Slot[] | null
+  /** Draw the date and caption lines on this frame. */
+  showText: boolean
+}
+
+export interface Slot {
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 export interface Filter {
@@ -28,7 +39,7 @@ export interface BoothSettings {
   printPaper: PrintPaper
 }
 
-export type PrintPaper = '4x6' | '2x6'
+export type PrintPaper = '4x6' | '2x6' | 'A4'
 
 export interface GalleryStrip {
   shareCode: string
