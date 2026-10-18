@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { getShareLink, queuePrint, setStripPublic } from '../lib/api.ts'
 import type { SavedStrip, ShareLink } from '../lib/booth-types.ts'
+import { Button, ButtonLink } from '../ui/button.tsx'
+import { Card } from '../ui/card.tsx'
+import { Chip } from '../ui/chip.tsx'
+import { ErrorBanner } from '../ui/error-banner.tsx'
+import { Toggle } from '../ui/toggle.tsx'
 
 interface FinishStepProps {
   strip: SavedStrip
@@ -64,8 +69,7 @@ export function FinishStep({ strip, onPrintQueued, onDone }: FinishStepProps) {
       <div className="finish">
         <img className="finished-strip" src={strip.imageUrl} alt="Your photo strip" />
         <div className="finish-panel">
-          <section className="finish-section" aria-label="Print">
-            <h3>Print</h3>
+          <Card title="Print" label="Print">
             {print.status === 'sent' ? (
               <p>
                 Printing {print.copies} {print.copies === 1 ? 'copy' : 'copies'}…
@@ -74,27 +78,20 @@ export function FinishStep({ strip, onPrintQueued, onDone }: FinishStepProps) {
               <>
                 <div className="button-row" role="group" aria-label="Copies">
                   {COPY_CHOICES.map((choice) => (
-                    <button
-                      key={choice}
-                      type="button"
-                      className="filter-chip"
-                      aria-pressed={copies === choice}
-                      onClick={() => setCopies(choice)}
-                    >
+                    <Chip key={choice} selected={copies === choice} onClick={() => setCopies(choice)}>
                       {choice} {choice === 1 ? 'copy' : 'copies'}
-                    </button>
+                    </Chip>
                   ))}
                 </div>
-                <button type="button" onClick={sendToPrinter} disabled={print.status === 'sending'}>
+                <Button icon="printer" onClick={sendToPrinter} disabled={print.status === 'sending'}>
                   Print
-                </button>
-                {print.status === 'error' && <p role="alert">{print.message}</p>}
+                </Button>
+                {print.status === 'error' && <ErrorBanner message={print.message} />}
               </>
             )}
-          </section>
+          </Card>
 
-          <section className="finish-section" aria-label="Phone">
-            <h3>Get it on your phone</h3>
+          <Card title="Get it on your phone" label="Phone">
             {link ? (
               <>
                 <img
@@ -102,26 +99,27 @@ export function FinishStep({ strip, onPrintQueued, onDone }: FinishStepProps) {
                   src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(link.qrSvg)}`}
                   alt="QR code for your strip"
                 />
-                <p className="share-url">{link.url}</p>
+                <p className="caption share-url">{link.url}</p>
               </>
             ) : (
-              <p className="page-note">Loading the QR code…</p>
+              <p className="caption">Loading the QR code…</p>
             )}
-            <label className="toggle">
-              <input type="checkbox" checked={isPublic} onChange={(event) => void toggleGallery(event.target.checked)} />
-              Show my strip in the gallery
-            </label>
-            {shareError && <p role="alert">{shareError}</p>}
-          </section>
+            <Toggle
+              label="Show my strip in the gallery"
+              checked={isPublic}
+              onChange={(event) => void toggleGallery(event.target.checked)}
+            />
+            {shareError && <ErrorBanner message={shareError} />}
+          </Card>
         </div>
       </div>
       <footer className="step-actions button-row">
-        <a className="button-link secondary-action" href={strip.imageUrl} download={`rato-${strip.shareCode}.png`}>
+        <ButtonLink variant="secondary" size="lg" icon="download" href={strip.imageUrl} download={`rato-${strip.shareCode}.png`}>
           Download
-        </a>
-        <button type="button" className="primary-action" onClick={onDone}>
+        </ButtonLink>
+        <Button size="lg" onClick={onDone}>
           Done
-        </button>
+        </Button>
       </footer>
     </>
   )

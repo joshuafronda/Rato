@@ -1,3 +1,6 @@
+import { Button } from '../ui/button.tsx'
+import { ErrorBanner } from '../ui/error-banner.tsx'
+
 interface ComposeStepProps {
   error: string | null
   onRetry: () => void
@@ -5,18 +8,17 @@ interface ComposeStepProps {
 }
 
 export function ComposeStep({ error, onRetry, onStartOver }: ComposeStepProps) {
-  if (!error) return <p className="stage-message">Making your strip…</p>
   return (
-    <div className="stage-message" role="alert">
-      <p>Your strip could not be saved: {error}</p>
-      <div className="button-row">
-        <button type="button" onClick={onRetry}>
-          Try again
-        </button>
-        <button type="button" className="secondary-action" onClick={onStartOver}>
-          Start over
-        </button>
-      </div>
+    <div className="choices">
+      {error ? (
+        <ErrorBanner message={`Sorry — your strip could not be saved: ${error}`} onRetry={onRetry}>
+          <Button variant="secondary" size="sm" onClick={onStartOver}>
+            Start over
+          </Button>
+        </ErrorBanner>
+      ) : (
+        <p className="stage-message">Making your strip…</p>
+      )}
     </div>
   )
 }

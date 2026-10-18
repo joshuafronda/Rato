@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import type { Camera } from '../capture/use-camera.ts'
 import { filterCss, grainAmount } from '../composer/filter-style.ts'
 import type { Filter } from '../lib/booth-types.ts'
+import { Badge } from '../ui/badge.tsx'
+import { Button } from '../ui/button.tsx'
+import { ErrorBanner } from '../ui/error-banner.tsx'
 import { CameraStage } from './camera-stage.tsx'
 
 interface CaptureStepProps {
@@ -74,9 +77,12 @@ export function CaptureStep({ camera, filter, countdownSeconds, shotNumber, tota
   return (
     <>
       <div className="step-header">
-        <h2>
-          Photo {shotNumber} of {totalShots}
-        </h2>
+        <h2>Smile!</h2>
+        <span className="step-count">
+          <Badge tone="info">
+            Photo {shotNumber} of {totalShots}
+          </Badge>
+        </span>
       </div>
       <CameraStage
         state={camera.state}
@@ -93,15 +99,11 @@ export function CaptureStep({ camera, filter, countdownSeconds, shotNumber, tota
         {phase.name === 'pause' && <div className="countdown countdown-note">Get ready…</div>}
       </CameraStage>
       <footer className="step-actions">
-        {error && (
-          <p role="alert" className="step-error">
-            {error}
-          </p>
-        )}
+        {error && <ErrorBanner message={error} />}
         {phase.name === 'ready' && (
-          <button type="button" className="primary-action" onClick={start} disabled={!camera.source}>
+          <Button size="lg" onClick={start} disabled={!camera.source}>
             Start the countdown
-          </button>
+          </Button>
         )}
       </footer>
     </>

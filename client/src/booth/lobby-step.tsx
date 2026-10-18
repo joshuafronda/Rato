@@ -1,7 +1,9 @@
 import type { Camera } from '../capture/use-camera.ts'
 import { useGallery } from '../gallery/use-gallery.ts'
-import type { Catalog } from './use-catalog.ts'
+import { Button } from '../ui/button.tsx'
+import { ErrorBanner } from '../ui/error-banner.tsx'
 import { CameraStage } from './camera-stage.tsx'
+import type { Catalog } from './use-catalog.ts'
 
 interface LobbyStepProps {
   camera: Camera
@@ -30,16 +32,11 @@ export function LobbyStep({ camera, catalog, retryCatalog, onStart }: LobbyStepP
       </div>
       <footer className="step-actions">
         {catalog.status === 'error' ? (
-          <div role="alert" className="step-error">
-            <p>{catalog.message}</p>
-            <button type="button" onClick={retryCatalog}>
-              Try again
-            </button>
-          </div>
+          <ErrorBanner message={catalog.message} onRetry={retryCatalog} />
         ) : (
-          <button type="button" className="primary-action" onClick={onStart} disabled={catalog.status !== 'ready'}>
+          <Button size="lg" icon="camera" onClick={onStart} disabled={catalog.status !== 'ready'}>
             Start
-          </button>
+          </Button>
         )}
       </footer>
     </>

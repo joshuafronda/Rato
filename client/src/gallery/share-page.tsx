@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getStrip } from '../lib/api.ts'
 import type { GalleryStrip } from '../lib/booth-types.ts'
+import { ButtonLink } from '../ui/button.tsx'
+import { ErrorBanner } from '../ui/error-banner.tsx'
 
 type StripState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; strip: GalleryStrip }
 
@@ -25,19 +27,24 @@ export function SharePage({ shareCode }: { shareCode: string }) {
 
   return (
     <main className="page share-page">
-      <h1>Your Rato strip</h1>
+      <h1 className="brand">
+        <span className="brand-mark" aria-hidden="true" />
+        Your Rato strip
+      </h1>
       {state.status === 'loading' && <p className="page-note">Loading…</p>}
-      {state.status === 'error' && <p role="alert">{state.message}</p>}
+      {state.status === 'error' && <ErrorBanner message={state.message} />}
       {state.status === 'ready' && (
         <>
           <img className="shared-strip" src={state.strip.imageUrl} alt="Your photo strip" />
-          <a className="button-link" href={state.strip.imageUrl} download={`rato-${shareCode}.png`}>
+          <ButtonLink size="lg" icon="download" href={state.strip.imageUrl} download={`rato-${shareCode}.png`}>
             Download
-          </a>
-          <p className="page-note">On iPhone, press and hold the photo, then tap Save to Photos.</p>
+          </ButtonLink>
+          <p className="caption">On iPhone, press and hold the photo, then tap Save to Photos.</p>
         </>
       )}
-      <a href="/gallery">See the gallery</a>
+      <ButtonLink variant="secondary" icon="image" href="/gallery">
+        See the gallery
+      </ButtonLink>
     </main>
   )
 }

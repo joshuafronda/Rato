@@ -1,3 +1,4 @@
+import { Button } from '../ui/button.tsx'
 import { ShotImage } from './shot-image.tsx'
 
 interface ReviewStepProps {
@@ -16,16 +17,16 @@ export function ReviewStep({ shots, onRetake, onMakeStrip }: ReviewStepProps) {
         {shots.map((shot, i) => (
           <figure key={i} className="review-shot">
             <ShotImage shot={shot} alt={`Shot ${i + 1}`} />
-            <button type="button" className="secondary-action" onClick={() => onRetake(i)}>
+            <Button variant="secondary" size="sm" onClick={() => onRetake(i)}>
               Retake shot {i + 1}
-            </button>
+            </Button>
           </figure>
         ))}
       </div>
       <footer className="step-actions">
-        <button type="button" className="primary-action" onClick={onMakeStrip}>
+        <Button size="lg" onClick={onMakeStrip}>
           Make my strip
-        </button>
+        </Button>
       </footer>
     </>
   )

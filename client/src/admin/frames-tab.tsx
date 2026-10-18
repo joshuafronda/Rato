@@ -1,5 +1,9 @@
 import { useCallback, useState } from 'react'
 import { type AdminFrame, type AdminLayout, adminApi } from '../lib/admin-api.ts'
+import { Button } from '../ui/button.tsx'
+import { Card } from '../ui/card.tsx'
+import { List, ListRow } from '../ui/list-row.tsx'
+import { Toggle } from '../ui/toggle.tsx'
 import { ActionError, LoadState } from './loading.tsx'
 import { useAction, useLoad } from './use-load.ts'
 
@@ -12,9 +16,9 @@ export function FramesTab() {
   return (
     <LoadState state={state}>
       {({ layouts, frames }) => (
-        <>
-          <ActionError error={error} />
+        <div className="admin-grid">
           <UploadFrame layouts={layouts} onUploaded={reload} />
+          <ActionError error={error} />
           {layouts.map((layout) => (
             <LayoutSection
               key={layout.id}
@@ -23,7 +27,7 @@ export function FramesTab() {
               run={run}
             />
           ))}
-        </>
+        </div>
       )}
     </LoadState>
   )
@@ -44,48 +48,30 @@ function LayoutSection({ layout, frames, run }: LayoutSectionProps) {
   }
 
   return (
-    <section className="admin-section" aria-label={layout.name}>
-      <div className="admin-row">
-        <h2>
-          {layout.name} ({layout.shots} photos)
-        </h2>
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={layout.active}
-            onChange={(event) => void run(() => adminApi.setLayoutActive(layout.id, event.target.checked))}
-          />
-          Offered to guests
-        </label>
-      </div>
-      <ul className="admin-list">
+    <Card label={layout.name} title={layout.name}>
+      <Toggle
+        label={`Offered to guests · ${layout.shots} photos`}
+        checked={layout.active}
+        onChange={(event) => void run(() => adminApi.setLayoutActive(layout.id, event.target.checked))}
+      />
+      <List>
         {frames.map((frame, index) => (
-          <li key={frame.id} className="admin-item">
-            <img className="admin-frame-thumb" src={frame.imageUrl} alt="" />
-            <span className="admin-item-name">{frame.name}</span>
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={frame.active}
-                onChange={(event) => void run(() => adminApi.updateFrame(frame.id, { active: event.target.checked }))}
-              />
-              On
-            </label>
-            <button type="button" className="secondary-action" disabled={index === 0} onClick={() => move(index, -1)}>
+          <ListRow key={frame.id} leading={<img className="frame-mini" src={frame.imageUrl} alt="" />} title={frame.name}>
+            <Toggle
+              label="On"
+              checked={frame.active}
+              onChange={(event) => void run(() => adminApi.updateFrame(frame.id, { active: event.target.checked }))}
+            />
+            <Button variant="secondary" size="sm" disabled={index === 0} onClick={() => move(index, -1)}>
               Up
-            </button>
-            <button
-              type="button"
-              className="secondary-action"
-              disabled={index === frames.length - 1}
-              onClick={() => move(index, 1)}
-            >
+            </Button>
+            <Button variant="secondary" size="sm" disabled={index === frames.length - 1} onClick={() => move(index, 1)}>
               Down
-            </button>
-          </li>
+            </Button>
+          </ListRow>
         ))}
-      </ul>
-    </section>
+      </List>
+    </Card>
   )
 }
 
@@ -98,41 +84,45 @@ function UploadFrame({ layouts, onUploaded }: { layouts: AdminLayout[]; onUpload
   const submit = (event: React.FormEvent) => {
     event.preventDefault()
     if (!file) return
+    const form = event.currentTarget as HTMLFormElement
     void run(async () => {
       await adminApi.uploadFrame(layoutId, name, file)
       setName('')
       setFile(null)
-      ;(event.target as HTMLFormElement).reset()
+      form.reset()
     })
   }
 
   return (
-    <form className="admin-section admin-form" onSubmit={submit}>
-      <h2>Add a frame</h2>
-      <p className="page-note">
-        A PNG of 600 × 1800 pixels with see-through holes where the photos go. Leave the bottom free for the
-        date and caption.
-      </p>
-      <label>
-        Layout
-        <select value={layoutId} onChange={(event) => setLayoutId(Number(event.target.value))}>
-          {layouts.map((layout) => (
-            <option key={layout.id} value={layout.id}>
-              {layout.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Name
-        <input value={name} onChange={(event) => setName(event.target.value)} maxLength={40} required />
-      </label>
-      <label>
-        Image (PNG)
-        <input type="file" accept="image/png" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
-      </label>
-      <ActionError error={error} />
-      <button type="submit">Upload frame</button>
-    </form>
+    <Card title="Add a frame" label="Add a frame">
+      <form className="card-form" onSubmit={submit}>
+        <p className="caption">
+          A PNG of 600 × 1800 pixels with see-through holes where the photos go. Leave the bottom free for the date and
+          caption.
+        </p>
+        <label className="field">
+          Layout
+          <select value={layoutId} onChange={(event) => setLayoutId(Number(event.target.value))}>
+            {layouts.map((layout) => (
+              <option key={layout.id} value={layout.id}>
+                {layout.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          Name
+          <input value={name} onChange={(event) => setName(event.target.value)} maxLength={40} required />
+        </label>
+        <label className="field">
+          Image (PNG)
+          <input type="file" accept="image/png" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
+        </label>
+        <ActionError error={error} />
+        <Button type="submit" icon="frame">
+          Upload frame
+        </Button>
+      </form>
+    </Card>
   )
 }

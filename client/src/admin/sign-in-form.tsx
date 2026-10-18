@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { adminApi } from '../lib/admin-api.ts'
+import { Button } from '../ui/button.tsx'
+import { Card } from '../ui/card.tsx'
+import { ErrorBanner } from '../ui/error-banner.tsx'
 
 interface SignInFormProps {
   mode: 'setup' | 'login'
@@ -27,32 +30,34 @@ export function SignInForm({ mode, onSignedIn }: SignInFormProps) {
   }
 
   return (
-    <form className="admin-form" onSubmit={submit}>
-      <h2>{mode === 'setup' ? 'Create the admin account' : 'Sign in'}</h2>
-      {mode === 'setup' && (
-        <p className="page-note">
-          Do this once, on the booth laptop at http://localhost:3000/admin. Choose any username and a password of at
-          least 8 characters.
-        </p>
-      )}
-      <label>
-        Username
-        <input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required />
-      </label>
-      <label>
-        Password
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          autoComplete={mode === 'setup' ? 'new-password' : 'current-password'}
-          required
-        />
-      </label>
-      {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={busy}>
-        {mode === 'setup' ? 'Create account' : 'Sign in'}
-      </button>
-    </form>
+    <Card className="admin-form">
+      <form className="card-form" onSubmit={submit}>
+        <h2>{mode === 'setup' ? 'Create the admin account' : 'Sign in'}</h2>
+        {mode === 'setup' && (
+          <p className="caption">
+            Do this once, on the booth laptop at http://localhost:3000/admin. Choose any username and a password of at
+            least 8 characters.
+          </p>
+        )}
+        <label className="field">
+          Username
+          <input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required />
+        </label>
+        <label className="field">
+          Password
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete={mode === 'setup' ? 'new-password' : 'current-password'}
+            required
+          />
+        </label>
+        {error && <ErrorBanner message={error} />}
+        <Button type="submit" disabled={busy}>
+          {mode === 'setup' ? 'Create account' : 'Sign in'}
+        </Button>
+      </form>
+    </Card>
   )
 }

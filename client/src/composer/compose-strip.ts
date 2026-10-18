@@ -25,10 +25,11 @@ export interface StripRequest {
 
 const BACKGROUND = '#ffffff'
 const TEXT_COLOR = '#1c1a21'
-const FONT = "system-ui, 'Segoe UI', Roboto, sans-serif"
+const FONT = "'Plus Jakarta Sans Variable', system-ui, 'Segoe UI', Roboto, sans-serif"
 
 // Builds the finished strip as a PNG: shots by layout, filter, frame on top, caption and date.
 export async function composeStrip(request: StripRequest): Promise<Blob> {
+  await loadFonts()
   const shots = await Promise.all(request.shots.map((shot) => createImageBitmap(shot)))
   try {
     const frame = request.frameUrl ? await loadImage(request.frameUrl) : null
@@ -86,6 +87,16 @@ export function drawStrip(context: CanvasRenderingContext2D, drawing: StripDrawi
   if (drawing.dateText) {
     context.font = `30px ${FONT}`
     context.fillText(drawing.dateText, STRIP.width / 2, STRIP.dateY, STRIP.textMaxWidth)
+  }
+}
+
+// Canvas text only uses a web font that is already loaded; otherwise it silently falls
+// back to the system font.
+async function loadFonts(): Promise<void> {
+  try {
+    await Promise.all([document.fonts.load(`bold 44px ${FONT}`), document.fonts.load(`30px ${FONT}`)])
+  } catch {
+    // The system font is fine too.
   }
 }
 

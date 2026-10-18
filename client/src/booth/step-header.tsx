@@ -1,17 +1,21 @@
+import { Button } from '../ui/button.tsx'
+
 interface StepHeaderProps {
   title: string
   onBack?: () => void
+  children?: React.ReactNode
 }
 
-export function StepHeader({ title, onBack }: StepHeaderProps) {
+export function StepHeader({ title, onBack, children }: StepHeaderProps) {
   return (
     <div className="step-header">
       {onBack && (
-        <button type="button" className="back-button" onClick={onBack}>
+        <Button variant="secondary" icon="back" onClick={onBack}>
           Back
-        </button>
+        </Button>
       )}
       <h2>{title}</h2>
+      {children}
     </div>
   )
 }

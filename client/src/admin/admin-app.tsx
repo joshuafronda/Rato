@@ -11,14 +11,25 @@ export function AdminApp() {
 
   return (
     <main className="page admin">
-      <h1>Rato admin</h1>
       <LoadState state={state}>
         {(status) => {
-          if (status.setupNeeded) return <SignInForm mode="setup" onSignedIn={reload} />
-          if (!status.username) return <SignInForm mode="login" onSignedIn={reload} />
+          if (status.setupNeeded) return <AdminTitle><SignInForm mode="setup" onSignedIn={reload} /></AdminTitle>
+          if (!status.username) return <AdminTitle><SignInForm mode="login" onSignedIn={reload} /></AdminTitle>
           return <Dashboard username={status.username} onSignedOut={reload} />
         }}
       </LoadState>
     </main>
+  )
+}
+
+function AdminTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <h1 className="brand">
+        <span className="brand-mark" aria-hidden="true" />
+        Rato admin
+      </h1>
+      {children}
+    </>
   )
 }

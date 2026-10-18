@@ -16,7 +16,7 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
   })
 
   await test.step('settings: caption and a 1-second countdown', async () => {
-    await admin.getByRole('button', { name: 'Settings & backup' }).click()
+    await admin.getByRole('button', { name: 'Settings', exact: true }).click()
     await admin.getByLabel('Caption on the strip').fill('Ana & Ben')
     await admin.getByLabel('Countdown (seconds)').fill('1')
     await admin.getByRole('button', { name: 'Save settings' }).click()
@@ -24,7 +24,7 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
   })
 
   await test.step('frames: upload a new frame for the 2-photo strip', async () => {
-    await admin.getByRole('button', { name: 'Frames & layouts' }).click()
+    await admin.getByRole('button', { name: 'Frames', exact: true }).click()
     await admin.getByLabel('Layout').selectOption({ label: 'Classic duo' })
     await admin.getByLabel('Name').fill('Gold')
     await admin.getByLabel('Image (PNG)').setInputFiles({ name: 'gold.png', mimeType: 'image/png', buffer: transparentPng(600, 1800) })
@@ -47,16 +47,16 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
   })
 
   await test.step('overview counts it, and a reprint goes to the booth printer', async () => {
-    await admin.getByRole('button', { name: 'Overview' }).click()
+    await admin.getByRole('button', { name: 'Overview', exact: true }).click()
     await expect(admin.getByText('Gold (1)')).toBeVisible()
-    await admin.getByRole('button', { name: 'Print queue' }).click()
+    await admin.getByRole('button', { name: 'Prints', exact: true }).click()
     await expect(admin.getByText('Printed')).toBeVisible()
     await admin.getByRole('button', { name: 'Reprint' }).click()
     await expect.poll(() => printsSoFar(page), { timeout: 15_000 }).toBe(2)
   })
 
   await test.step('gallery moderation: delete the strip', async () => {
-    await admin.getByRole('button', { name: 'Gallery' }).click()
+    await admin.getByRole('button', { name: 'Gallery', exact: true }).click()
     const strip = admin.getByRole('img', { name: /^Strip / })
     await expect(strip).toHaveCount(1)
     const code = (await strip.getAttribute('alt'))?.replace('Strip ', '')
@@ -67,7 +67,7 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
   })
 
   await test.step('backup', async () => {
-    await admin.getByRole('button', { name: 'Settings & backup' }).click()
+    await admin.getByRole('button', { name: 'Settings', exact: true }).click()
     await admin.getByRole('button', { name: 'Back up now' }).click()
     await expect(admin.getByText(/Saved to .*rato-backup-\d{8}-\d{6}/)).toBeVisible()
   })

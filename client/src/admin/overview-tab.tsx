@@ -10,7 +10,7 @@ export function OverviewTab() {
     <LoadState state={state}>
       {(overview) => (
         <section className="stat-grid" aria-label="Overview">
-          <Stat label="Sessions today" value={overview.sessionsToday} />
+          <Stat label="Sessions today" value={overview.sessionsToday} accent />
           <Stat label="Total strips" value={overview.totalStrips} />
           <Stat label="Prints" value={overview.totalPrints} />
           <Stat
@@ -18,14 +18,14 @@ export function OverviewTab() {
             value={overview.mostUsedFrame ? `${overview.mostUsedFrame.name} (${overview.mostUsedFrame.sessions})` : '—'}
           />
           <div className="stat">
-            <span className="stat-label">Peak hours</span>
+            <span className="caption">Peak hours</span>
             {overview.peakHours.length === 0 ? (
               <span className="stat-value">—</span>
             ) : (
               <ol className="peak-hours">
                 {overview.peakHours.map((peak) => (
                   <li key={peak.hour}>
-                    {String(peak.hour).padStart(2, '0')}:00 – {peak.sessions} sessions
+                    {String(peak.hour).padStart(2, '0')}:00 · {peak.sessions} sessions
                   </li>
                 ))}
               </ol>
@@ -37,10 +37,10 @@ export function OverviewTab() {
   )
 }
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+function Stat({ label, value, accent }: { label: string; value: number | string; accent?: boolean }) {
   return (
-    <div className="stat">
-      <span className="stat-label">{label}</span>
+    <div className={accent ? 'stat stat-accent' : 'stat'}>
+      <span className="caption">{label}</span>
       <span className="stat-value">{value}</span>
     </div>
   )

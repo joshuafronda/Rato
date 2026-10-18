@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { Camera } from '../capture/use-camera.ts'
 import { filterCss, grainAmount } from '../composer/filter-style.ts'
 import type { Filter } from '../lib/booth-types.ts'
+import { Button } from '../ui/button.tsx'
+import { Chip } from '../ui/chip.tsx'
 import { CameraStage } from './camera-stage.tsx'
 import { StepHeader } from './step-header.tsx'
 
@@ -26,26 +28,20 @@ export function FilterStep({ camera, filters, onChoose, onBack }: FilterStepProp
       />
       <div className="filter-row">
         {filters.map((filter) => (
-          <button
-            key={filter.id}
-            type="button"
-            className="filter-chip"
-            aria-pressed={filter.id === selected?.id}
-            onClick={() => setSelected(filter)}
-          >
+          <Chip key={filter.id} selected={filter.id === selected?.id} onClick={() => setSelected(filter)}>
             {filter.name}
-          </button>
+          </Chip>
         ))}
       </div>
       <footer className="step-actions">
-        <button
-          type="button"
-          className="primary-action"
+        <Button
+          size="lg"
+          icon="camera"
           disabled={!selected || camera.state.status !== 'live'}
           onClick={() => selected && onChoose(selected)}
         >
           Take the photos
-        </button>
+        </Button>
       </footer>
     </>
   )

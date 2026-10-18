@@ -1,5 +1,8 @@
 import { useCallback, useState } from 'react'
 import { type AdminSettings, adminApi } from '../lib/admin-api.ts'
+import { Button } from '../ui/button.tsx'
+import { Card } from '../ui/card.tsx'
+import { Toggle } from '../ui/toggle.tsx'
 import { ActionError, LoadState } from './loading.tsx'
 import { useAction, useLoad } from './use-load.ts'
 
@@ -9,10 +12,10 @@ export function SettingsTab() {
   return (
     <LoadState state={state}>
       {(settings) => (
-        <>
+        <div className="admin-grid">
           <SettingsForm saved={settings} />
           <Backup />
-        </>
+        </div>
       )}
     </LoadState>
   )
@@ -38,9 +41,9 @@ function SettingsForm({ saved }: { saved: AdminSettings }) {
   }
 
   return (
-    <form className="admin-section admin-form" onSubmit={submit} aria-label="Settings">
-      <h2>Settings</h2>
-      <label>
+    <Card title="Settings" label="Settings">
+      <form className="card-form" onSubmit={submit}>
+      <label className="field">
         Countdown (seconds)
         <input
           type="number"
@@ -50,30 +53,27 @@ function SettingsForm({ saved }: { saved: AdminSettings }) {
           onChange={(event) => set('countdownSeconds', Number(event.target.value))}
         />
       </label>
-      <label>
+      <label className="field">
         Caption on the strip
         <input value={form.captionText} maxLength={40} onChange={(event) => set('captionText', event.target.value)} />
       </label>
-      <label>
+      <label className="field">
         Date format (e.g. MMM d, yyyy or dd/MM/yyyy; empty = no date)
         <input value={form.dateFormat} maxLength={30} onChange={(event) => set('dateFormat', event.target.value)} />
       </label>
-      <label>
+      <label className="field">
         Print paper
         <select value={form.printPaper} onChange={(event) => set('printPaper', event.target.value as AdminSettings['printPaper'])}>
           <option value="4x6">4×6 photo paper (two strips, cut in half)</option>
           <option value="2x6">2×6 strip paper</option>
         </select>
       </label>
-      <label>
+      <label className="field">
         Printer (a note for you; the booth prints to the Windows default printer)
         <input value={form.printer} maxLength={100} onChange={(event) => set('printer', event.target.value)} />
       </label>
-      <label className="toggle">
-        <input type="checkbox" checked={form.galleryEnabled} onChange={(event) => set('galleryEnabled', event.target.checked)} />
-        Gallery on
-      </label>
-      <label>
+      <Toggle label="Gallery on" checked={form.galleryEnabled} onChange={(event) => set('galleryEnabled', event.target.checked)} />
+      <label className="field">
         Auto-delete strips after (days, 0 = never)
         <input
           type="number"
@@ -84,9 +84,10 @@ function SettingsForm({ saved }: { saved: AdminSettings }) {
         />
       </label>
       <ActionError error={error} />
-      {done && <p className="page-note">Saved.</p>}
-      <button type="submit">Save settings</button>
-    </form>
+      {done && <p className="caption">Saved.</p>}
+      <Button type="submit">Save settings</Button>
+      </form>
+    </Card>
   )
 }
 
@@ -95,17 +96,16 @@ function Backup() {
   const { run, error } = useAction(noop)
 
   return (
-    <section className="admin-section" aria-label="Backup">
-      <h2>Backup</h2>
-      <p className="page-note">
+    <Card title="Backup" label="Backup">
+      <p className="caption">
         Copies the database, photos, strips and frames into a new folder on the laptop. Copy that folder to a USB drive
         to keep it safe.
       </p>
-      <button type="button" onClick={() => void run(async () => setPath((await adminApi.backup()).path))}>
+      <Button icon="download" onClick={() => void run(async () => setPath((await adminApi.backup()).path))}>
         Back up now
-      </button>
+      </Button>
       <ActionError error={error} />
-      {path && <p>Saved to {path}</p>}
-    </section>
+      {path && <p className="caption">Saved to {path}</p>}
+    </Card>
   )
 }

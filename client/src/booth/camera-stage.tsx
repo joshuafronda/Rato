@@ -1,5 +1,6 @@
 import type { CaptureErrorKind } from '../capture/capture-source.ts'
 import type { CameraState } from '../capture/use-camera.ts'
+import { ErrorBanner } from '../ui/error-banner.tsx'
 import { CameraPreview } from './camera-preview.tsx'
 
 const ERROR_MESSAGES: Record<CaptureErrorKind, string> = {
@@ -27,14 +28,7 @@ export function CameraStage({ state, retry, filterCss, grain, children }: Camera
     <section className="stage" aria-live="polite">
       {state.status === 'starting' && <p className="stage-message">Starting the camera…</p>}
       {state.status === 'live' && <CameraPreview stream={state.stream} filterCss={filterCss} grain={grain} />}
-      {state.status === 'error' && (
-        <div className="stage-message" role="alert">
-          <p>{ERROR_MESSAGES[state.kind]}</p>
-          <button type="button" onClick={retry}>
-            Try again
-          </button>
-        </div>
-      )}
+      {state.status === 'error' && <ErrorBanner message={ERROR_MESSAGES[state.kind]} onRetry={retry} />}
       {state.status === 'live' && children}
     </section>
   )

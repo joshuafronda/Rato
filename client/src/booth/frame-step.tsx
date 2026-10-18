@@ -1,4 +1,5 @@
 import type { Frame, Layout } from '../lib/booth-types.ts'
+import { ErrorBanner } from '../ui/error-banner.tsx'
 import { StepHeader } from './step-header.tsx'
 import { useFrames } from './use-catalog.ts'
 
@@ -15,11 +16,7 @@ export function FrameStep({ layout, onChoose, onBack }: FrameStepProps) {
     <>
       <StepHeader title="Pick a frame" onBack={onBack} />
       {list.status === 'loading' && <p className="stage-message">Loading frames…</p>}
-      {list.status === 'error' && (
-        <p className="stage-message" role="alert">
-          {list.message}
-        </p>
-      )}
+      {list.status === 'error' && <ErrorBanner message={list.message} />}
       {list.status === 'ready' && (
         <div className="choices">
           {list.frames.map((frame) => (

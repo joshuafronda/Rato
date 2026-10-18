@@ -55,7 +55,10 @@ export function BoothScreen() {
   return (
     <main className="booth">
       <header className="booth-header">
-        <h1>Rato</h1>
+        <h1 className="brand">
+          <span className="brand-mark" aria-hidden="true" />
+          Rato
+        </h1>
         {flow.step === 'lobby' && camera.cameras.length > 1 && (
           <label className="camera-picker">
             Camera
