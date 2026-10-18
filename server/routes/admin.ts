@@ -30,10 +30,13 @@ import {
 import { createBackup } from '../services/backup.ts'
 import { RequestError } from '../services/request-error.ts'
 import { readSettingsForAdmin, updateSettings } from '../services/settings.ts'
-import { boothOnly } from './booth.ts'
+import { localOnly } from './booth.ts'
 import { badRequest, positiveInteger } from './http.ts'
 
 const COOKIE = 'rato_admin'
+export const setupOnLaptop = localOnly(
+  'Create the admin account on the booth laptop: open http://localhost:3000/admin there. After that you can sign in from any device.',
+)
 const frameBody = express.raw({ type: 'image/png', limit: '10mb' })
 
 export interface AdminRouterOptions {
@@ -54,7 +57,7 @@ export function adminRouter({ db, storageDir, backupDir }: AdminRouterOptions): 
   })
 
   // The first admin can only be created on the booth laptop itself.
-  router.post('/setup', boothOnly, (req, res) => {
+  router.post('/setup', setupOnLaptop, (req, res) => {
     const { username, password } = credentials(req.body)
     setSessionCookie(res, createFirstAdmin(db, username, password))
     res.status(201).json({ ok: true })

@@ -30,7 +30,10 @@ export function SignInForm({ mode, onSignedIn }: SignInFormProps) {
     <form className="admin-form" onSubmit={submit}>
       <h2>{mode === 'setup' ? 'Create the admin account' : 'Sign in'}</h2>
       {mode === 'setup' && (
-        <p className="page-note">Do this on the booth laptop. Use a password of at least 8 characters.</p>
+        <p className="page-note">
+          Do this once, on the booth laptop at http://localhost:3000/admin. Choose any username and a password of at
+          least 8 characters.
+        </p>
       )}
       <label>
         Username

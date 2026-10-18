@@ -54,9 +54,14 @@ export function boothRouter(db: Database, storageDir: string): Router {
 // Taking photos needs the camera, which the browser only opens on localhost, so the booth
 // screen always talks to the server over loopback. Phones on the Wi-Fi can view strips but
 // cannot create sessions or upload files.
-export const boothOnly: RequestHandler = (req, res, next) => {
-  if (isLoopback(req.socket.remoteAddress)) return next()
-  badRequest(res, 'Only the booth screen can do this', 403)
+export const boothOnly = localOnly('Only the booth screen can do this')
+
+// Lets a request through only from the laptop itself (http://localhost).
+export function localOnly(message: string): RequestHandler {
+  return (req, res, next) => {
+    if (isLoopback(req.socket.remoteAddress)) return next()
+    badRequest(res, message, 403)
+  }
 }
 
 export function isLoopback(address: string | undefined): boolean {

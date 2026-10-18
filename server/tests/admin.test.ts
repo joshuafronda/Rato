@@ -1,9 +1,11 @@
 import { existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import request from 'supertest'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createApp } from '../app.ts'
 import type { Database } from '../db/connection.ts'
+import type { Request, Response } from 'express'
+import { setupOnLaptop } from '../routes/admin.ts'
 import { LoginLimiter } from '../services/admin-auth.ts'
 import { deleteExpiredSessions } from '../services/cleanup.ts'
 import { hashPassword, verifyPassword } from '../services/passwords.ts'
@@ -82,6 +84,16 @@ describe('admin sign-in', () => {
     expect(again.status).toBe(409)
     const status = await request(s.server).get('/api/admin/status').set('Cookie', cookie.split(';')[0])
     expect(status.body).toEqual({ setupNeeded: false, username: 'host' })
+  })
+
+  it('explains that setup must happen on the laptop when opened from another address', () => {
+    const json = vi.fn()
+    const res = { status: vi.fn(() => ({ json })) } as unknown as Response
+    const next = vi.fn()
+    setupOnLaptop({ socket: { remoteAddress: '192.168.1.15' } } as Request, res, next)
+    expect(next).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(403)
+    expect(json).toHaveBeenCalledWith({ error: expect.stringContaining('http://localhost:3000/admin') })
   })
 
   it('refuses a short password', async () => {
