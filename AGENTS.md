@@ -79,7 +79,7 @@ Full spec: `Build - Specs/prompt.md`.
   printer. Saved strips are 600 x 1800 px marked 300 dpi, so they print at 2 x 6 inches.
 - Frames: a PNG frame's see-through windows are found on upload and the photos go exactly
   there; "Date & captions" can be turned off for frames that carry their own text. The
-  event frame is `event-frames/knowing-christ-more.png` (Triple strip).
+  event frames are in `event-frames/` (Triple strip; see its README).
 - **Nothing deploys unless the user says "deploy" for this change.**
 - Uploaded is not live. Use the changed feature on the real booth and report what was verified
   and what the user still needs to check.
