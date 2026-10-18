@@ -1,9 +1,11 @@
 import { extname, join } from 'node:path'
 import express, { type ErrorRequestHandler } from 'express'
 import type { Database } from './db/connection.ts'
+import { boothRouter } from './routes/booth.ts'
 import { catalogRouter } from './routes/catalog.ts'
 import { healthRouter } from './routes/health.ts'
 import { FRAMES_URL } from './services/catalog.ts'
+import { RequestError } from './services/request-error.ts'
 
 export interface AppOptions {
   db: Database
@@ -20,6 +22,7 @@ export function createApp({ db, storageDir, clientDir }: AppOptions): express.Ex
 
   app.use('/api', healthRouter(db))
   app.use('/api', catalogRouter(db))
+  app.use('/api', boothRouter(db, storageDir))
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Not found' })
   })
@@ -59,6 +62,10 @@ const CLIENT_ERROR_MESSAGES: Record<number, string> = {
 const jsonErrors: ErrorRequestHandler = (error, _req, res, next) => {
   // Too late for a JSON body; let Express close the connection.
   if (res.headersSent) return next(error)
+  if (error instanceof RequestError) {
+    res.status(error.status).json({ error: error.message })
+    return
+  }
   const status = clientErrorStatus(error)
   if (status) {
     res.status(status).json({ error: CLIENT_ERROR_MESSAGES[status] ?? 'Bad request' })
