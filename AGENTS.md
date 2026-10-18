@@ -49,12 +49,19 @@ Full spec: `Build - Specs/prompt.md`.
 - CI (`.github/workflows/ci.yml`): TBD - added once the repo has a GitHub remote.
 - Once CI exists, after ANY dependency change: `gh workflow run relock.yml`, `git pull`,
   `gh workflow run ci.yml`.
-- Windows native bindings: npm can drop platform packages from the lockfile (npm/cli#4828),
-  which breaks Vite/Vitest with "Cannot find native binding". The root `package.json` pins
-  `@rolldown/binding-win32-x64-msvc` and `lightningcss-win32-x64-msvc` as optionalDependencies
-  so npm always keeps them. When Vite is upgraded, bump both to the versions of `rolldown` and
-  `lightningcss` in the lockfile (`npm ls rolldown lightningcss`). To set up a fresh checkout,
-  prefer `npm ci`.
+- Native bindings (npm/cli#4828): a plain `npm i` can prune other platforms' native packages
+  from `package-lock.json`, and without the Windows one Vite/Vitest fail with "Cannot find
+  native binding". So:
+  - The root `package.json` pins `@rolldown/binding-win32-x64-msvc` and
+    `lightningcss-win32-x64-msvc` as optionalDependencies, so this laptop always has them.
+  - `npm test` first runs `scripts/check-native-bindings.mjs`, which fails if a pin no longer
+    matches the `rolldown`/`lightningcss` version in the lockfile, or if the lockfile lost the
+    Linux/macOS bindings.
+  - After ANY dependency change (`npm install <pkg>`, a Vite upgrade, or a plain `npm i` that
+    rewrote the lockfile): update the pins if the check says so, run `npm run relock` (rebuilds
+    the lockfile with every platform), then `npm test` and `npm run build`, and commit the
+    lockfile.
+  - To set up a fresh checkout, use `npm ci` (installs exactly what the lockfile lists).
 
 ## Running it
 - Development: `npm run dev` (Express API on :3000) and, in a second terminal,

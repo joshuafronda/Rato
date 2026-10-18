@@ -15,7 +15,8 @@
     "dev:client": "npm run dev --workspace client",
     "build": "npm run build --workspace client",
     "start": "npm run start --workspace server",
-    "test": "npm test --workspaces --if-present",
+    "test": "node scripts/check-native-bindings.mjs && npm test --workspaces --if-present",
+    "relock": "node scripts/relock.mjs",
     "test:e2e": "playwright test",
     "lint": "npm run lint --workspaces --if-present"
   },
