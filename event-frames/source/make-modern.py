@@ -17,26 +17,12 @@ def label(x, y, w, h, angle, text, size, fill, shadow=True):
             f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="8" fill="{fill}"/>'
             f'<text x="{x + w / 2}" y="{y + h / 2 + size * 0.36}" text-anchor="middle" class="sans" font-weight="800" font-size="{size}" fill="#FFFFFF">{text}</text></g>')
 
-def glossy_cross(cx, cy, s):
-    """A chunky glossy cross, the 3D accent (like the reference's shield and flag)."""
-    a = s * 0.28                         # bar thickness
-    arm = s * 0.74                       # crossbar length
-    top = cy - s / 2
-    bar_y = top + s * 0.24
-    return f"""<g filter="url(#drop)" transform="rotate(8 {cx} {cy})">
-<rect x="{cx - a / 2}" y="{top}" width="{a}" height="{s}" rx="{a * 0.18}" fill="url(#cross-body)"/>
-<rect x="{cx - arm / 2}" y="{bar_y}" width="{arm}" height="{a}" rx="{a * 0.18}" fill="url(#cross-body)"/>
-<rect x="{cx - a / 2 + a * 0.16}" y="{top + a * 0.16}" width="{a * 0.22}" height="{s - a * 0.32}" rx="{a * 0.11}" fill="#FFFFFF" opacity="0.4"/>
-<rect x="{cx - arm / 2 + a * 0.16}" y="{bar_y + a * 0.16}" width="{arm - a * 0.32}" height="{a * 0.18}" rx="{a * 0.09}" fill="#FFFFFF" opacity="0.3"/>
-</g>"""
-
 body = f'''
 <defs>
 <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.55" stop-color="#F1F0F5"/><stop offset="1" stop-color="#E4E2EC"/></linearGradient>
 <linearGradient id="title" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2E1065"/><stop offset="1" stop-color="#4C1D95"/></linearGradient>
 <linearGradient id="pill" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#111111"/><stop offset="0.55" stop-color="#3B1A7A"/><stop offset="1" stop-color="#7C4DDB"/></linearGradient>
 <linearGradient id="purple-card" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2E1065"/><stop offset="1" stop-color="#7C4DDB"/></linearGradient>
-<linearGradient id="cross-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B69CF6"/><stop offset="0.45" stop-color="#7C4DDB"/><stop offset="1" stop-color="#3B1A7A"/></linearGradient>
 <filter id="soft" x="-20%" y="-20%" width="140%" height="160%"><feGaussianBlur stdDeviation="10"/></filter>
 <filter id="streak" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="28"/></filter>
 <filter id="drop" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="4" dy="10" stdDeviation="8" flood-color="#2E1065" flood-opacity="0.35"/></filter>
@@ -56,13 +42,12 @@ body = f'''
 {shadows}{borders}
 
 
-<!-- footer: service-time cards, the glossy cross and logo badge, the pill button -->
+<!-- footer: service-time cards, the logo badge, the pill button -->
 {label(26, 1428, 320, 44, -2, 'Sunday · 6:00 AM &amp; 5:00 PM', 18, INK)}
 {label(52, 1482, 300, 44, 2, 'Thursday · 5:30 PM', 19, 'url(#purple-card)')}
 {label(22, 1536, 340, 44, -2, 'Morning Prayer · Mon–Sat · 5 &amp; 6 AM', 16, 'url(#purple-card)')}
 <circle cx="478" cy="1528" r="63" fill="#FFFFFF" filter="url(#drop)"/>
 <image href="{LOGO}" x="417.7" y="1467.7" width="120.6" height="120.6" clip-path="url(#logoclip)"/>
-{glossy_cross(410, 1460, 78)}
 
 <g filter="url(#drop)">
 <rect x="60" y="1624" width="480" height="62" rx="12" fill="url(#pill)"/>
