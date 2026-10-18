@@ -24,6 +24,31 @@ export interface BoothSettings {
   countdownSeconds: number
   captionText: string
   dateFormat: string
+  printPaper: PrintPaper
+}
+
+export type PrintPaper = '4x6' | '2x6'
+
+export interface GalleryStrip {
+  shareCode: string
+  imageUrl: string
+  createdAt: string
+}
+
+export interface Gallery {
+  enabled: boolean
+  strips: GalleryStrip[]
+}
+
+export interface ShareLink {
+  url: string
+  qrSvg: string
+}
+
+export interface PrintJob {
+  id: number
+  copies: number
+  imageUrl: string
 }
 
 export interface SavedStrip {

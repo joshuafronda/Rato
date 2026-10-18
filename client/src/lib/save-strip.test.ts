@@ -40,7 +40,7 @@ describe('saveStrip', () => {
       frame,
       filter,
       shots,
-      settings: { countdownSeconds: 3, captionText: 'Ana & Ben', dateFormat: 'MMM d, yyyy' },
+      settings: { countdownSeconds: 3, captionText: 'Ana & Ben', dateFormat: 'MMM d, yyyy', printPaper: '4x6' },
       date: new Date(2026, 9, 7),
     })
     expect(strip.shareCode).toBe('abcdefghjk')
@@ -59,7 +59,7 @@ describe('saveStrip', () => {
       frame: null,
       filter,
       shots,
-      settings: { countdownSeconds: 3, captionText: '', dateFormat: '' },
+      settings: { countdownSeconds: 3, captionText: '', dateFormat: '', printPaper: '4x6' },
       date: new Date(),
     })
     expect(calls[0]).toBe('compose null "" ""')

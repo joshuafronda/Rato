@@ -12,6 +12,7 @@ import { LobbyStep } from './lobby-step.tsx'
 import { ReviewStep } from './review-step.tsx'
 import { useCatalog } from './use-catalog.ts'
 import { useIdleReset } from './use-idle-reset.ts'
+import { usePrintQueue } from './use-print-queue.ts'
 
 // A guest who walks away is back at the lobby after this long without a tap.
 const IDLE_RESET_MS = 90_000
@@ -23,6 +24,7 @@ export function BoothScreen() {
   const reset = useCallback(() => dispatch({ type: 'reset' }), [])
   const onShot = useCallback((shot: Blob) => dispatch({ type: 'shotTaken', shot }), [])
   useIdleReset(flow.step !== 'lobby', reset, IDLE_RESET_MS)
+  const checkPrintQueue = usePrintQueue(catalog.status === 'ready' ? catalog.settings.printPaper : null)
   // A double tap must not save the strip twice.
   const saving = useRef(false)
 
@@ -117,7 +119,7 @@ export function BoothScreen() {
         />
       )}
       {flow.step === 'compose' && <ComposeStep error={flow.error} onRetry={makeStrip} onStartOver={reset} />}
-      {flow.step === 'finish' && flow.strip && <FinishStep strip={flow.strip} onDone={reset} />}
+      {flow.step === 'finish' && flow.strip && <FinishStep strip={flow.strip} onPrintQueued={checkPrintQueue} onDone={reset} />}
     </main>
   )
 }
