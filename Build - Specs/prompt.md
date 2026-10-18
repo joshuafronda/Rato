@@ -36,7 +36,7 @@ Build a free, offline photo booth website from the plan below. Work the BrewedOp
 
 ### 1. Objective
 
-A photo booth that runs on one Windows laptop with a DSLR attached. Guests pick a strip layout, frame and filter, take the shots, then print the strip or open it from their phone. I manage everything from an admin dashboard. It must work with no internet connection.
+A photo booth that runs on one Windows laptop with any camera the browser can use. Guests pick a strip layout, frame and filter, take the shots, then print the strip or open it from their phone. I manage everything from an admin dashboard. It must work with no internet connection.
 
 Success looks like this:
 - A guest finishes a strip in under 2 minutes without help.
@@ -49,7 +49,7 @@ Success looks like this:
 - **Strip composition:** browser canvas, uploaded as a PNG
 - **Back end:** Node.js with Express
 - **Database:** SQLite
-- **Camera, version 1:** the DSLR brand's free Windows webcam utility, read in the browser as a webcam
+- **Camera, version 1:** any device with a camera (built-in webcam, USB webcam, or a DSLR through its webcam utility), read in the browser as a webcam
 - **Camera, later upgrade:** digiCamControl for full-resolution shots, added behind the same capture interface
 - **Printing:** Chrome kiosk-printing mode, no print dialog
 - **Hosting:** the laptop only. No internet needed. No cloud services.
@@ -58,8 +58,8 @@ Success looks like this:
 ### 3. Architecture
 
 ```
-DSLR --USB--> Windows laptop
-                |-- Webcam utility        (DSLR appears as a webcam)
+Camera (any) --> Windows laptop
+                |-- Browser camera        (built-in, USB, or DSLR via its webcam utility)
                 |-- Node.js + Express     (public site, admin site, API)
                 |-- SQLite database       (one file)
                 |-- Storage folder        (photos, strips, frames)
@@ -168,7 +168,7 @@ Build in this order. Each gate must pass, and I must approve, before the next ph
    Gate: a full strip can be made start to finish.
 3. **Print and share:** printing and queue, QR code, local gallery.
    Gate: a strip prints and opens on a phone.
-4. **Admin and polish:** dashboard, settings, backup, test with the real DSLR.
+4. **Admin and polish:** dashboard, settings, backup, test with the real camera.
    Gate: the whole booth is tested end to end.
 
 ### 8. Working rules
@@ -181,11 +181,9 @@ Build in this order. Each gate must pass, and I must approve, before the next ph
 
 ### 9. Ask me before you start
 
-1. What are the DSLR brand and model? This decides whether the webcam utility works or we start with digiCamControl.
-2. What are the printer model and paper size?
-3. Should the gallery show every strip, or only strips a guest agrees to share?
-4. Should strips auto-delete after the event, or stay in the gallery?
-5. Is a simple admin password enough for now?
+1. Should the gallery show every strip, or only strips a guest agrees to share?
+2. Should strips auto-delete after the event, or stay in the gallery?
+3. Is a simple admin password enough for now?
 
 ### 10. Out of scope for version 1
 
