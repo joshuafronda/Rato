@@ -1,4 +1,4 @@
-import type { Database } from './connection.ts'
+import { type Database, inTransaction } from './connection.ts'
 
 export interface SessionRow {
   id: number
@@ -105,8 +105,7 @@ export function claimNextPrintJob(db: Database): ClaimedPrintRow | undefined {
 
 // Ends a job that is printing. A printed job adds its copies to the strip's print count.
 export function finishPrintJob(db: Database, id: number, printed: boolean): boolean {
-  db.exec('BEGIN')
-  try {
+  return inTransaction(db, () => {
     const result = db
       .prepare("UPDATE print_jobs SET status = ? WHERE id = ? AND status = 'printing'")
       .run(printed ? 'printed' : 'failed', id)
@@ -116,10 +115,6 @@ export function finishPrintJob(db: Database, id: number, printed: boolean): bool
         'UPDATE strips SET print_count = print_count + (SELECT copies FROM print_jobs WHERE id = ?) WHERE id = (SELECT strip_id FROM print_jobs WHERE id = ?)',
       ).run(id, id)
     }
-    db.exec('COMMIT')
     return changed
-  } catch (error) {
-    if (db.isTransaction) db.exec('ROLLBACK')
-    throw error
-  }
+  })
 }

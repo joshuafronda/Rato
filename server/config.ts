@@ -10,6 +10,7 @@ export const config = {
   host: process.env.HOST || '0.0.0.0',
   // Relative paths resolve from the repo root, not from whichever folder npm started in.
   storageDir: resolve(ROOT, process.env.STORAGE_DIR || 'storage'),
+  backupDir: resolve(ROOT, process.env.BACKUP_DIR || 'backups'),
   clientDir: join(ROOT, 'client', 'dist'),
   // The laptop's address for share links and QR codes. Empty = detect the Wi-Fi address.
   publicHost: process.env.PUBLIC_HOST || '',

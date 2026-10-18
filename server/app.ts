@@ -1,6 +1,7 @@
 import { extname, join } from 'node:path'
 import express, { type ErrorRequestHandler } from 'express'
 import type { Database } from './db/connection.ts'
+import { adminRouter } from './routes/admin.ts'
 import { boothRouter } from './routes/booth.ts'
 import { catalogRouter } from './routes/catalog.ts'
 import { sharingRouter } from './routes/sharing.ts'
@@ -12,6 +13,8 @@ export interface AppOptions {
   db: Database
   // The storage folder (photos/, strips/, frames/).
   storageDir: string
+  // Where admin backups are written. Defaults to backups/ next to the storage folder.
+  backupDir?: string
   // The address phones use to reach the booth, for share links. Read per request, since the
   // laptop's Wi-Fi address can change during an event.
   shareBaseUrl?: () => string
@@ -19,7 +22,13 @@ export interface AppOptions {
   clientDir?: string
 }
 
-export function createApp({ db, storageDir, clientDir, shareBaseUrl = () => 'http://localhost:3000' }: AppOptions): express.Express {
+export function createApp({
+  db,
+  storageDir,
+  backupDir = join(storageDir, '..', 'backups'),
+  clientDir,
+  shareBaseUrl = () => 'http://localhost:3000',
+}: AppOptions): express.Express {
   const app = express()
   app.disable('x-powered-by')
   app.use(express.json({ limit: '1mb' }))
@@ -28,6 +37,7 @@ export function createApp({ db, storageDir, clientDir, shareBaseUrl = () => 'htt
   app.use('/api', catalogRouter(db))
   app.use('/api', boothRouter(db, storageDir))
   app.use('/api', sharingRouter(db, shareBaseUrl))
+  app.use('/api/admin', adminRouter({ db, storageDir, backupDir }))
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Not found' })
   })
