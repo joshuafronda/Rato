@@ -1,11 +1,11 @@
 rules_version = '2';
 
-// Firebase Storage rules for the online gallery. Phones may only fetch a shared strip or the
-// gallery index by its exact name: no listing, and no writes. The booth laptop uploads with
-// its service account key, which these rules do not apply to.
+// Firebase Storage rules for the online gallery. Phones may only fetch a strip (in its booth's
+// folder) or the gallery index by its exact name: no listing, and no writes. The booth laptops
+// upload with their service account key, which these rules do not apply to.
 service firebase.storage {
   match /b/{bucket}/o {
-    match /strips/{file} {
+    match /strips/{booth}/{file} {
       allow get: if true;
     }
     match /gallery.json {

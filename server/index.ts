@@ -33,7 +33,8 @@ const CLOUD_SYNC_MS = 30_000
 const bucket = connectBucket()
 let syncNow = () => {}
 if (bucket) {
-  const sync = cloudGallerySync(db, config.storageDir, bucket)
+  const sync = cloudGallerySync(db, config.storageDir, bucket, config.boothId)
+  console.log(`Online gallery on - this booth posts as "${config.boothId}"`)
   let lastError = ''
   const cloudSync = coalescedRunner(async () => {
     try {

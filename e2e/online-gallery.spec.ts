@@ -24,8 +24,8 @@ async function fakeStorage(page: Page, index: unknown | (() => unknown)): Promis
 test('shows the shared strips newest first and opens one full size', async ({ page }) => {
   const requested = await fakeStorage(page, {
     strips: [
-      { code: 'bbbbbbbbbb', createdAt: '2026-10-18 10:00:00' },
-      { code: 'aaaaaaaaaa', createdAt: '2026-10-18 09:00:00' },
+      { booth: 'hall', code: 'bbbbbbbbbb', createdAt: '2026-10-18 10:00:00' },
+      { booth: 'lobby', code: 'aaaaaaaaaa', createdAt: '2026-10-18 09:00:00' },
     ],
   })
   await page.goto(PAGE_URL)
@@ -34,7 +34,7 @@ test('shows the shared strips newest first and opens one full size', async ({ pa
   await expect(strips).toHaveCount(2)
   await expect(page.getByRole('img', { name: 'A shared photo strip' }).first()).toHaveAttribute(
     'src',
-    `${STORAGE}strips%2Fbbbbbbbbbb.png?alt=media`,
+    `${STORAGE}strips%2Fhall%2Fbbbbbbbbbb.png?alt=media`,
   )
 
   await strips.first().click()
@@ -42,18 +42,19 @@ test('shows the shared strips newest first and opens one full size', async ({ pa
   await expect(viewer).toBeVisible()
   await expect(viewer.getByRole('link', { name: 'Save photo' })).toHaveAttribute(
     'href',
-    `${STORAGE}strips%2Fbbbbbbbbbb.png?alt=media`,
+    `${STORAGE}strips%2Fhall%2Fbbbbbbbbbb.png?alt=media`,
   )
   await viewer.getByRole('button', { name: 'Close' }).click()
   await expect(viewer).toBeHidden()
   expect(requested.some((url) => url.includes('gallery.json'))).toBe(true)
 })
 
-test('ignores an entry that is not a share code', async ({ page }) => {
+test('ignores an entry whose code or booth is not safe', async ({ page }) => {
   await fakeStorage(page, {
     strips: [
-      { code: '../../evil', createdAt: '2026-10-18 10:00:00' },
-      { code: 'aaaaaaaaaa', createdAt: '2026-10-18 09:00:00' },
+      { booth: 'hall', code: '../../evil', createdAt: '2026-10-18 10:00:00' },
+      { booth: '../x', code: 'cccccccccc', createdAt: '2026-10-18 10:00:00' },
+      { booth: 'lobby', code: 'aaaaaaaaaa', createdAt: '2026-10-18 09:00:00' },
     ],
   })
   await page.goto(PAGE_URL)
@@ -74,13 +75,13 @@ test('says so when the list cannot be loaded', async ({ page }) => {
 
 test('a newly posted strip appears by itself within 10 seconds', async ({ page }) => {
   await page.clock.install()
-  const strips = [{ code: 'aaaaaaaaaa', createdAt: '2026-10-18 09:00:00' }]
+  const strips = [{ booth: 'lobby', code: 'aaaaaaaaaa', createdAt: '2026-10-18 09:00:00' }]
   await fakeStorage(page, () => ({ strips }))
   await page.goto(PAGE_URL)
   const cards = page.getByRole('button', { name: /^Open the strip from/ })
   await expect(cards).toHaveCount(1)
 
-  strips.unshift({ code: 'bbbbbbbbbb', createdAt: '2026-10-18 09:05:00' })
+  strips.unshift({ booth: 'hall', code: 'bbbbbbbbbb', createdAt: '2026-10-18 09:05:00' })
   await page.clock.runFor(10_000)
   await expect(cards).toHaveCount(2)
 })

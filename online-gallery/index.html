@@ -193,13 +193,15 @@
     </dialog>
 
     <script>
-      // Reads the list the booth laptop uploads (gallery.json) from Firebase Storage: every
-      // finished strip, posted within seconds of being saved.
+      // Reads the list the booth laptops upload (gallery.json) from Firebase Storage: every
+      // finished strip from every booth, posted within seconds of being saved.
       const BUCKET = 'rato-d2428.firebasestorage.app'
       const STORAGE = `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/`
       const REFRESH_MS = 10_000
-      // The booth's share code format (server/services/strips.ts), so a bad entry never becomes a URL.
+      // The booth's share code and booth name formats (server/services/strips.ts, server/config.ts),
+      // so a bad entry never becomes a URL.
       const SHARE_CODE = /^[a-z2-9]{10}$/
+      const BOOTH_ID = /^[a-z0-9-]{1,32}$/
 
       const status = document.getElementById('status')
       const grid = document.getElementById('grid')
@@ -232,8 +234,8 @@
 
       function render(strips) {
         grid.replaceChildren(
-          ...strips.map(({ code, createdAt }) => {
-            const url = fileUrl(`strips/${code}.png`)
+          ...strips.map(({ booth, code, createdAt }) => {
+            const url = fileUrl(`strips/${booth}/${code}.png`)
             const time = formatTime(createdAt)
             const button = document.createElement('button')
             button.type = 'button'
@@ -261,7 +263,12 @@
           if (!response.ok) throw new Error(`HTTP ${response.status}`)
           const index = await response.json()
           const strips = (Array.isArray(index.strips) ? index.strips : []).filter(
-            (strip) => typeof strip.code === 'string' && SHARE_CODE.test(strip.code) && typeof strip.createdAt === 'string',
+            (strip) =>
+              typeof strip.booth === 'string' &&
+              BOOTH_ID.test(strip.booth) &&
+              typeof strip.code === 'string' &&
+              SHARE_CODE.test(strip.code) &&
+              typeof strip.createdAt === 'string',
           )
           // Re-render only on change, so a refresh never resets the page under the guest.
           const key = JSON.stringify(strips)

@@ -1,3 +1,4 @@
+import { hostname } from 'node:os'
 import { join, resolve } from 'node:path'
 
 const ROOT = resolve(import.meta.dirname, '..')
@@ -18,6 +19,8 @@ export const config = {
   // path to the service account key file, which lives outside the repo.
   firebaseBucket: process.env.FIREBASE_BUCKET || '',
   firebaseKeyFile: process.env.FIREBASE_KEY_FILE || '',
+  // This booth's folder in the online gallery, so several booths can share one bucket.
+  boothId: boothIdFrom(process.env.BOOTH_ID, hostname()),
 }
 
 export const databasePath = join(config.storageDir, 'rato.db')
@@ -31,4 +34,12 @@ export function parsePort(value: string | undefined): number {
     throw new Error(`PORT must be a whole number from 1 to 65535, got "${value}"`)
   }
   return port
+}
+
+// BOOTH_ID, else the computer name, made safe for a folder name: lowercase letters, digits and
+// dashes, at most 32 characters.
+export function boothIdFrom(value: string | undefined, computerName: string): string {
+  const raw = value || computerName
+  const safe = raw.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 32).replace(/^-+|-+$/g, '')
+  return safe || 'booth'
 }

@@ -12,8 +12,19 @@ export function firebaseBucket(bucketName: string, keyFile: string): CloudBucket
       const [files] = await bucket.getFiles({ prefix })
       return files.map((file) => file.name)
     },
-    upload: async (path, data, { contentType, cacheControl }) => {
-      await bucket.file(path).save(data, { resumable: false, contentType, metadata: { cacheControl } })
+    read: async (path) => {
+      const file = bucket.file(path)
+      const [exists] = await file.exists()
+      if (!exists) return undefined
+      // Read the version first, then exactly that version, so the pair always matches.
+      const [metadata] = await file.getMetadata()
+      const generation = String(metadata.generation)
+      const [data] = await bucket.file(path, { generation }).download()
+      return { data, generation }
+    },
+    upload: async (path, data, { contentType, cacheControl, ifGeneration }) => {
+      const preconditionOpts = ifGeneration === undefined ? undefined : { ifGenerationMatch: ifGeneration }
+      await bucket.file(path).save(data, { resumable: false, contentType, metadata: { cacheControl }, preconditionOpts })
     },
     remove: async (path) => {
       await bucket.file(path).delete({ ignoreNotFound: true })

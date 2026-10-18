@@ -36,6 +36,9 @@ export default defineConfig({
       PORT: String(PORT),
       HOST: '127.0.0.1',
       STORAGE_DIR,
+      // Never post test strips to the real online gallery: these win over any .env file.
+      FIREBASE_BUCKET: '',
+      FIREBASE_KEY_FILE: '',
     },
   },
 })
