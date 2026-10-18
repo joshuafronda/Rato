@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 565 163" width="565" height="163" role="img" aria-label="Rato">
+  <title>Rato</title>
+  <path transform="matrix(0.2 0 0 -0.2 4.0 153.0)" d="M66 0V745H351Q428 745 487.5 718.0Q547 691 581.0 638.0Q615 585 615 507Q615 431 580.0 377.5Q545 324 486 297L656 0H482L298 329L398 270H221V0ZM221 405H352Q385 405 409.0 418.0Q433 431 446.5 454.0Q460 477 460 507Q460 538 446.5 561.0Q433 584 409.0 597.0Q385 610 352 610H221Z" fill="#14284F"/>
+  <path transform="matrix(0.2 0 0 -0.2 140.4 153.0)" d="M11 0 263 745H469L721 0H552L502 152H229L179 0ZM272 287H459L345 639H387Z" fill="#14284F"/>
+  <path transform="matrix(0.2 0 0 -0.2 278.8 153.0)" d="M200 0V610H11V745H541V610H355V0Z" fill="#14284F"/>
+  <circle cx="473.0" cy="78.5" r="64.8" fill="none" stroke="#14284F" stroke-width="28.4"/>
+    <circle cx="473.0" cy="78.5" r="50.6" fill="#9BC45A"/>
+    <path d="M473.0 60.3L506.7 40.8 M488.8 69.4L522.5 88.9 M488.8 87.6L488.8 126.5 M473.0 96.7L439.3 116.2 M457.2 87.6L423.5 68.1 M457.2 69.4L457.2 30.5" stroke="#14284F" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M473.0 60.3 L488.8 69.4 L488.8 87.6 L473.0 96.7 L457.2 87.6 L457.2 69.4Z" fill="#0B1630"/>
+    <circle cx="451.8" cy="57.3" r="6.6" fill="#FFFFFF"/>
+</svg>

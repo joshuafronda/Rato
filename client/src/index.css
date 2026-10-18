@@ -450,11 +450,11 @@ h3 {
 }
 
 .brand-mark {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--leaf);
-  box-shadow: 0 0 0 4px var(--leaf-soft);
+  /* The Rato camera icon (brand/rato-icon.svg). */
+  flex: none;
+  width: 1.4em;
+  height: 1.4em;
+  background: url('/rato-icon.svg') center / contain no-repeat;
 }
 
 .camera-picker {
