@@ -1,23 +1,16 @@
 import { expect, test } from '@playwright/test'
-import { makeStrip } from './booth-helpers.ts'
+import { countPrints, makeStrip, printsSoFar } from './booth-helpers.ts'
 
 // Phase 3 gate: a strip prints and opens on a phone.
 test('a guest prints copies, gets a QR code, and shares to the gallery', async ({ page, browser }) => {
   test.setTimeout(60_000)
-  // Count print calls instead of opening a print dialog.
-  await page.addInitScript(() => {
-    const state = window as unknown as { prints: number }
-    state.prints = 0
-    window.print = () => {
-      state.prints += 1
-    }
-  })
+  await countPrints(page)
   const code = await makeStrip(page)
 
   await page.getByRole('button', { name: '2 copies' }).click()
   await page.getByRole('button', { name: 'Print', exact: true }).click()
   await expect(page.getByText('Printing 2 copies…')).toBeVisible()
-  await expect.poll(() => page.evaluate(() => (window as unknown as { prints: number }).prints)).toBe(2)
+  await expect.poll(() => printsSoFar(page)).toBe(2)
   // The booth reported the job as printed, so a second claim finds nothing.
   await expect
     .poll(async () => (await (await page.request.post('/api/print-queue/claim')).json()).job)

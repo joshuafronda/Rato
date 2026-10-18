@@ -71,6 +71,9 @@ Full spec: `Build - Specs/prompt.md`.
   Once per laptop: `scripts\allow-phones-firewall.cmd` as administrator, so phones reach
   the gallery and QR links. The server prints the phone address at startup; set PUBLIC_HOST
   if it picked the wrong network.
+- Admin: open http://localhost:3000/admin on the booth laptop once to create the admin account
+  (only possible from the laptop). After that, sign in from any phone at
+  http://<laptop-ip>:3000/admin. Backups go to `backups/` (set BACKUP_DIR to change it).
 - Print paper is the `print_paper` setting: `4x6` (two strips side by side, cut in half) or
   `2x6`. Set the photo printer as the Windows default printer.
 - **Nothing deploys unless the user says "deploy" for this change.**

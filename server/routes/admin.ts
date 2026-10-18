@@ -165,8 +165,8 @@ export function adminRouter({ db, storageDir, backupDir }: AdminRouterOptions): 
     res.json(updateSettings(db, objectBody(req.body)))
   })
 
-  router.post('/backup', (_req, res) => {
-    res.status(201).json({ path: createBackup(db, storageDir, backupDir) })
+  router.post('/backup', async (_req, res) => {
+    res.status(201).json({ path: await createBackup(db, storageDir, backupDir) })
   })
 
   return router

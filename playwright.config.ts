@@ -11,7 +11,9 @@ const STORAGE_DIR = process.env.RATO_E2E_STORAGE
 export default defineConfig({
   testDir: 'e2e',
   globalSetup: './e2e/global-setup.ts',
-  fullyParallel: true,
+  // One server and database for every test, and every booth page prints whatever is in the
+  // shared print queue, so tests run one at a time.
+  workers: 1,
   reporter: 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
