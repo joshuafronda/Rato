@@ -28,6 +28,7 @@ import {
   setupNeeded,
 } from '../services/admin-auth.ts'
 import { createBackup } from '../services/backup.ts'
+import { downloadDays, downloadFiles, downloadName, parseDay, writeZip } from '../services/download.ts'
 import { RequestError } from '../services/request-error.ts'
 import { readSettingsForAdmin, updateSettings } from '../services/settings.ts'
 import { localOnly } from './booth.ts'
@@ -139,7 +140,26 @@ export function adminRouter({ db, storageDir, backupDir }: AdminRouterOptions): 
 
   router.get('/strips', (req, res) => {
     const page = typeof req.query.page === 'string' && /^\d+$/.test(req.query.page) ? Number(req.query.page) : 0
-    res.json(adminStrips(db, page))
+    res.json(adminStrips(db, page, parseDay(req.query.date)))
+  })
+
+  router.get('/strip-days', (_req, res) => {
+    res.json(downloadDays(db))
+  })
+
+  // A zip of one day's strips (?date=YYYY-MM-DD; none = every day), with the original
+  // shots when ?photos=1.
+  router.get('/download', (req, res) => {
+    const day = parseDay(req.query.date)
+    const withPhotos = req.query.photos === '1'
+    const files = downloadFiles(db, storageDir, day, withPhotos)
+    if (files.length === 0) return badRequest(res, 'There are no strips for that day', 404)
+    res.attachment(downloadName(day, withPhotos))
+    res.type('application/zip')
+    writeZip(files, res, (error) => {
+      console.error(error)
+      res.destroy(error)
+    })
   })
 
   router.patch('/strips/:id', (req, res) => {

@@ -11,13 +11,15 @@
   },
   "dependencies": {
     "express": "^5.3.0",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "yazl": "^3.3.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^24.19.2",
     "@types/qrcode": "^1.5.6",
     "@types/supertest": "^7.2.1",
+    "@types/yazl": "^3.3.1",
     "supertest": "^7.3.1",
     "typescript": "^6.0.3",
     "vitest": "^5.0.5"

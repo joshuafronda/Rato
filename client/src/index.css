@@ -998,3 +998,18 @@ h3 {
 .card-form > .btn[type='submit'] {
   align-self: flex-start;
 }
+
+.day-picker {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.day-chips {
+  justify-content: flex-start;
+}
+
+.download-row {
+  justify-content: flex-start;
+}

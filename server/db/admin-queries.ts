@@ -188,15 +188,6 @@ export function setDefaultFilter(db: Database, id: number): void {
 
 // --- strips and prints ---
 
-export function listStrips(db: Database, limit: number, offset: number): AdminStripRow[] {
-  return db
-    .prepare(
-      `SELECT id, session_id, share_code, is_public, print_count, created_at FROM strips
-       ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
-    )
-    .all(limit, offset) as unknown as AdminStripRow[]
-}
-
 export function setStripPublicById(db: Database, id: number, isPublic: boolean): boolean {
   return Number(db.prepare('UPDATE strips SET is_public = ? WHERE id = ?').run(isPublic ? 1 : 0, id).changes) > 0
 }
@@ -259,4 +250,64 @@ export function writeSettings(db: Database, values: Map<string, string>): void {
 
 export function snapshotDatabase(db: Database, path: string): void {
   db.prepare('VACUUM INTO ?').run(path)
+}
+
+// --- downloads by day (days are the laptop's local dates) ---
+
+export interface DownloadStripRow {
+  share_code: string
+  image_path: string
+  day: string
+  time: string
+}
+
+export interface DownloadPhotoRow {
+  share_code: string
+  shot_number: number
+  image_path: string
+  day: string
+  time: string
+}
+
+// One day ('YYYY-MM-DD'), or every day when day is null.
+const DAY_FILTER = "(? IS NULL OR date(strips.created_at, 'localtime') = ?)"
+
+export function stripDays(db: Database): Array<{ day: string; strips: number }> {
+  return db
+    .prepare(
+      `SELECT date(created_at, 'localtime') AS day, COUNT(*) AS strips FROM strips
+       GROUP BY day ORDER BY day DESC`,
+    )
+    .all() as unknown as Array<{ day: string; strips: number }>
+}
+
+export function listStripsOnDay(db: Database, day: string | null, limit: number, offset: number): AdminStripRow[] {
+  return db
+    .prepare(
+      `SELECT id, session_id, share_code, is_public, print_count, created_at FROM strips
+       WHERE ${DAY_FILTER} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+    )
+    .all(day, day, limit, offset) as unknown as AdminStripRow[]
+}
+
+export function stripsForDownload(db: Database, day: string | null): DownloadStripRow[] {
+  return db
+    .prepare(
+      `SELECT share_code, image_path, date(created_at, 'localtime') AS day,
+              strftime('%H-%M-%S', created_at, 'localtime') AS time
+       FROM strips WHERE ${DAY_FILTER} ORDER BY created_at, id`,
+    )
+    .all(day, day) as unknown as DownloadStripRow[]
+}
+
+export function photosForDownload(db: Database, day: string | null): DownloadPhotoRow[] {
+  return db
+    .prepare(
+      `SELECT strips.share_code, photos.shot_number, photos.image_path,
+              date(strips.created_at, 'localtime') AS day,
+              strftime('%H-%M-%S', strips.created_at, 'localtime') AS time
+       FROM photos JOIN strips ON strips.session_id = photos.session_id
+       WHERE ${DAY_FILTER} ORDER BY strips.created_at, strips.id, photos.shot_number`,
+    )
+    .all(day, day) as unknown as DownloadPhotoRow[]
 }

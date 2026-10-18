@@ -55,8 +55,19 @@ test('the admin configures the booth, reprints and moderates a strip', async ({ 
     await expect.poll(() => printsSoFar(page), { timeout: 15_000 }).toBe(2)
   })
 
-  await test.step('gallery moderation: delete the strip', async () => {
+  await test.step("download today's strips as a zip", async () => {
     await admin.getByRole('button', { name: 'Gallery', exact: true }).click()
+    await expect(admin.getByText(/^1 strip on /)).toBeVisible()
+    const [strips] = await Promise.all([admin.waitForEvent('download'), admin.getByRole('link', { name: 'Download strips' }).click()])
+    expect(strips.suggestedFilename()).toMatch(/^rato-\d{4}-\d{2}-\d{2}\.zip$/)
+    const [withPhotos] = await Promise.all([
+      admin.waitForEvent('download'),
+      admin.getByRole('link', { name: 'Strips + original photos' }).click(),
+    ])
+    expect(withPhotos.suggestedFilename()).toMatch(/-with-photos\.zip$/)
+  })
+
+  await test.step('gallery moderation: delete the strip', async () => {
     const strip = admin.getByRole('img', { name: /^Strip / })
     await expect(strip).toHaveCount(1)
     const code = (await strip.getAttribute('alt'))?.replace('Strip ', '')

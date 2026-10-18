@@ -66,6 +66,15 @@ export interface AdminSettings {
 
 const BASE = '/api/admin'
 
+// The zip of one day's strips (null = every day), optionally with the original shots.
+export function downloadUrl(day: string | null, withPhotos: boolean): string {
+  const query = new URLSearchParams()
+  if (day) query.set('date', day)
+  if (withPhotos) query.set('photos', '1')
+  const text = query.toString()
+  return `${BASE}/download${text ? `?${text}` : ''}`
+}
+
 export const adminApi = {
   status: () => request<AdminStatus>(`${BASE}/status`),
   setup: (username: string, password: string) => request<void>(`${BASE}/setup`, jsonPost({ username, password })),
@@ -87,7 +96,9 @@ export const adminApi = {
   filters: () => request<AdminFilter[]>(`${BASE}/filters`),
   setFilterActive: (id: number, active: boolean) => request<void>(`${BASE}/filters/${id}`, jsonPost({ active }, 'PATCH')),
   setDefaultFilter: (id: number) => request<void>(`${BASE}/filters/${id}/default`, { method: 'POST' }),
-  strips: (page: number) => request<AdminStrip[]>(`${BASE}/strips?page=${page}`),
+  strips: (page: number, day: string | null) =>
+    request<AdminStrip[]>(`${BASE}/strips?page=${page}${day ? `&date=${day}` : ''}`),
+  stripDays: () => request<Array<{ day: string; strips: number }>>(`${BASE}/strip-days`),
   setStripPublic: (id: number, isPublic: boolean) => request<void>(`${BASE}/strips/${id}`, jsonPost({ isPublic }, 'PATCH')),
   deleteStrip: (id: number) => request<void>(`${BASE}/strips/${id}`, { method: 'DELETE' }),
   printJobs: () => request<AdminPrintJob[]>(`${BASE}/print-jobs`),

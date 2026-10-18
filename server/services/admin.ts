@@ -12,7 +12,7 @@ import {
   listAllFrames,
   listAllLayouts,
   listPrintJobs,
-  listStrips,
+  listStripsOnDay,
   mostUsedFrame,
   readStats,
   setDefaultFilter,
@@ -114,8 +114,9 @@ export function makeDefaultFilter(db: Database, id: number): void {
   setDefaultFilter(db, id)
 }
 
-export function adminStrips(db: Database, page: number) {
-  return listStrips(db, STRIP_PAGE, page * STRIP_PAGE).map((row) => ({
+// One page of strips, newest first, from one day or (day = null) every day.
+export function adminStrips(db: Database, page: number, day: string | null = null) {
+  return listStripsOnDay(db, day, STRIP_PAGE, page * STRIP_PAGE).map((row) => ({
     id: row.id,
     shareCode: row.share_code,
     imageUrl: stripImageUrl(row.share_code),
