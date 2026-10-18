@@ -53,3 +53,73 @@ export function findStripByCode(db: Database, shareCode: string): StripRow | und
     .prepare('SELECT share_code, image_path, created_at FROM strips WHERE share_code = ?')
     .get(shareCode) as unknown as StripRow | undefined
 }
+
+export interface PublicStripRow {
+  share_code: string
+  created_at: string
+}
+
+export interface ClaimedPrintRow {
+  id: number
+  copies: number
+  share_code: string
+}
+
+export function findStripId(db: Database, shareCode: string): number | undefined {
+  const row = db.prepare('SELECT id FROM strips WHERE share_code = ?').get(shareCode)
+  return row ? Number(row.id) : undefined
+}
+
+export function findStripVisibility(db: Database, shareCode: string): boolean | undefined {
+  const row = db.prepare('SELECT is_public FROM strips WHERE share_code = ?').get(shareCode)
+  return row ? row.is_public === 1 : undefined
+}
+
+export function setStripPublic(db: Database, shareCode: string, isPublic: boolean): boolean {
+  const result = db.prepare('UPDATE strips SET is_public = ? WHERE share_code = ?').run(isPublic ? 1 : 0, shareCode)
+  return Number(result.changes) > 0
+}
+
+export function listPublicStrips(db: Database, limit: number): PublicStripRow[] {
+  return db
+    .prepare('SELECT share_code, created_at FROM strips WHERE is_public = 1 ORDER BY created_at DESC, id DESC LIMIT ?')
+    .all(limit) as unknown as PublicStripRow[]
+}
+
+export function insertPrintJob(db: Database, stripId: number, copies: number): number {
+  const result = db.prepare('INSERT INTO print_jobs (strip_id, copies) VALUES (?, ?)').run(stripId, copies)
+  return Number(result.lastInsertRowid)
+}
+
+// Takes the oldest queued job and marks it printing in one statement, so no two callers
+// get the same job.
+export function claimNextPrintJob(db: Database): ClaimedPrintRow | undefined {
+  return db
+    .prepare(
+      `UPDATE print_jobs SET status = 'printing'
+       WHERE id = (SELECT id FROM print_jobs WHERE status = 'queued' ORDER BY id LIMIT 1)
+       RETURNING id, copies, (SELECT share_code FROM strips WHERE strips.id = print_jobs.strip_id) AS share_code`,
+    )
+    .get() as unknown as ClaimedPrintRow | undefined
+}
+
+// Ends a job that is printing. A printed job adds its copies to the strip's print count.
+export function finishPrintJob(db: Database, id: number, printed: boolean): boolean {
+  db.exec('BEGIN')
+  try {
+    const result = db
+      .prepare("UPDATE print_jobs SET status = ? WHERE id = ? AND status = 'printing'")
+      .run(printed ? 'printed' : 'failed', id)
+    const changed = Number(result.changes) > 0
+    if (changed && printed) {
+      db.prepare(
+        'UPDATE strips SET print_count = print_count + (SELECT copies FROM print_jobs WHERE id = ?) WHERE id = (SELECT strip_id FROM print_jobs WHERE id = ?)',
+      ).run(id, id)
+    }
+    db.exec('COMMIT')
+    return changed
+  } catch (error) {
+    if (db.isTransaction) db.exec('ROLLBACK')
+    throw error
+  }
+}

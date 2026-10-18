@@ -75,7 +75,7 @@ describe('GET /api/booth-settings', () => {
     db.prepare("UPDATE settings SET value = 'Ana & Ben' WHERE key = 'caption_text'").run()
     const res = await request(app(db)).get('/api/booth-settings')
     expect(res.status).toBe(200)
-    expect(res.body).toEqual({ countdownSeconds: 3, captionText: 'Ana & Ben', dateFormat: 'MMM d, yyyy' })
+    expect(res.body).toEqual({ countdownSeconds: 3, captionText: 'Ana & Ben', dateFormat: 'MMM d, yyyy', printPaper: '4x6' })
   })
 })
 

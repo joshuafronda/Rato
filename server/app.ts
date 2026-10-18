@@ -3,6 +3,7 @@ import express, { type ErrorRequestHandler } from 'express'
 import type { Database } from './db/connection.ts'
 import { boothRouter } from './routes/booth.ts'
 import { catalogRouter } from './routes/catalog.ts'
+import { sharingRouter } from './routes/sharing.ts'
 import { healthRouter } from './routes/health.ts'
 import { FRAMES_URL } from './services/catalog.ts'
 import { RequestError } from './services/request-error.ts'
@@ -11,11 +12,14 @@ export interface AppOptions {
   db: Database
   // The storage folder (photos/, strips/, frames/).
   storageDir: string
+  // The address phones use to reach the booth, for share links. Read per request, since the
+  // laptop's Wi-Fi address can change during an event.
+  shareBaseUrl?: () => string
   // Built client to serve (client/dist). Omitted in tests and when Vite serves the client.
   clientDir?: string
 }
 
-export function createApp({ db, storageDir, clientDir }: AppOptions): express.Express {
+export function createApp({ db, storageDir, clientDir, shareBaseUrl = () => 'http://localhost:3000' }: AppOptions): express.Express {
   const app = express()
   app.disable('x-powered-by')
   app.use(express.json({ limit: '1mb' }))
@@ -23,6 +27,7 @@ export function createApp({ db, storageDir, clientDir }: AppOptions): express.Ex
   app.use('/api', healthRouter(db))
   app.use('/api', catalogRouter(db))
   app.use('/api', boothRouter(db, storageDir))
+  app.use('/api', sharingRouter(db, shareBaseUrl))
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Not found' })
   })

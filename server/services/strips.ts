@@ -101,7 +101,7 @@ function openSession(db: Database, sessionId: number): SessionRow {
   return session
 }
 
-function stripImageUrl(shareCode: string): string {
+export function stripImageUrl(shareCode: string): string {
   return `/api/strips/${shareCode}/image`
 }
 

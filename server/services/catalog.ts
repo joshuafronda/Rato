@@ -41,7 +41,10 @@ export interface BoothSettings {
   countdownSeconds: number
   captionText: string
   dateFormat: string
+  printPaper: PrintPaper
 }
+
+export type PrintPaper = '4x6' | '2x6'
 
 const DEFAULT_COUNTDOWN_SECONDS = 3
 
@@ -58,12 +61,13 @@ export function filters(db: Database): Filter[] {
 }
 
 export function boothSettings(db: Database): BoothSettings {
-  const settings = readSettings(db, ['countdown_seconds', 'caption_text', 'date_format'])
+  const settings = readSettings(db, ['countdown_seconds', 'caption_text', 'date_format', 'print_paper'])
   const countdown = Number(settings.get('countdown_seconds'))
   return {
     countdownSeconds: Number.isInteger(countdown) && countdown > 0 ? countdown : DEFAULT_COUNTDOWN_SECONDS,
     captionText: settings.get('caption_text') ?? '',
     dateFormat: settings.get('date_format') ?? '',
+    printPaper: settings.get('print_paper') === '2x6' ? '2x6' : '4x6',
   }
 }
 
