@@ -8,13 +8,14 @@ import { transparentPng } from './booth-helpers.ts'
 const PAGE_URL = pathToFileURL(join(import.meta.dirname, '..', 'online-gallery', 'index.html')).href
 const STORAGE = 'https://firebasestorage.googleapis.com/v0/b/rato-d2428.firebasestorage.app/o/'
 
-async function fakeStorage(page: Page, index: unknown): Promise<string[]> {
+async function fakeStorage(page: Page, index: unknown | (() => unknown)): Promise<string[]> {
   const requested: string[] = []
   await page.route(`${STORAGE}**`, (route) => {
     const url = route.request().url()
     requested.push(url)
     const headers = { 'access-control-allow-origin': '*' }
-    if (url.startsWith(`${STORAGE}gallery.json?`)) return route.fulfill({ headers, json: index })
+    const json = typeof index === 'function' ? index() : index
+    if (url.startsWith(`${STORAGE}gallery.json?`)) return route.fulfill({ headers, json })
     return route.fulfill({ headers, contentType: 'image/png', body: transparentPng(600, 1800) })
   })
   return requested
@@ -69,4 +70,17 @@ test('says so when the list cannot be loaded', async ({ page }) => {
   await page.route(`${STORAGE}**`, (route) => route.fulfill({ status: 503, body: 'down' }))
   await page.goto(PAGE_URL)
   await expect(page.getByText('The photos could not be loaded. Check your connection and try again.')).toBeVisible()
+})
+
+test('a newly posted strip appears by itself within 10 seconds', async ({ page }) => {
+  await page.clock.install()
+  const strips = [{ code: 'aaaaaaaaaa', createdAt: '2026-10-18 09:00:00' }]
+  await fakeStorage(page, () => ({ strips }))
+  await page.goto(PAGE_URL)
+  const cards = page.getByRole('button', { name: /^Open the strip from/ })
+  await expect(cards).toHaveCount(1)
+
+  strips.unshift({ code: 'bbbbbbbbbb', createdAt: '2026-10-18 09:05:00' })
+  await page.clock.runFor(10_000)
+  await expect(cards).toHaveCount(2)
 })

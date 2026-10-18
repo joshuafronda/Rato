@@ -19,6 +19,7 @@ storage/
 *-firebase-adminsdk-*.json
 
 # Tooling output
+.firebase/
 test-results/
 playwright-report/
 .scanloop/report.json

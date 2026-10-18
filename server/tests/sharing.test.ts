@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import request from 'supertest'
 import { describe, expect, it } from 'vitest'
 import { createApp } from '../app.ts'
-import { setStripPublicById } from '../db/admin-queries.ts'
 import type { Database } from '../db/connection.ts'
 import { lanAddress, shareBaseUrl } from '../services/network.ts'
 import { migratedDb, tempDir } from './helpers.ts'
@@ -11,11 +10,11 @@ import { migratedDb, tempDir } from './helpers.ts'
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4])
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3])
 
-function booth({ onlineGallery = false } = {}) {
+function booth({ onlineGallery = false, onStripSaved = () => {} } = {}) {
   const db = migratedDb()
   const storageDir = tempDir('rato-storage-')
   for (const folder of ['photos', 'strips', 'frames']) mkdirSync(join(storageDir, folder))
-  const server = createApp({ db, storageDir, shareBaseUrl: () => 'http://192.168.1.20:3000', onlineGallery })
+  const server = createApp({ db, storageDir, shareBaseUrl: () => 'http://192.168.1.20:3000', onlineGallery, onStripSaved })
   return { db, server }
 }
 
@@ -79,41 +78,17 @@ describe('share link', () => {
     expect((await request(b.server).get('/api/strips/abcdefghjk/share')).status).toBe(404)
   })
 
+  it('starts the online upload as soon as a strip is saved', async () => {
+    let saved = 0
+    const b = booth({ onStripSaved: () => (saved += 1) })
+    await makeStrip(b)
+    expect(saved).toBe(1)
+  })
+
   it('tells the booth when shared strips also go to the online gallery', async () => {
     const b = booth({ onlineGallery: true })
     const code = await makeStrip(b)
     expect((await request(b.server).get(`/api/strips/${code}/share`)).body.onlineGallery).toBe(true)
-  })
-})
-
-describe('online consent', () => {
-  function onlineOk(db: Database, code: string): number {
-    return Number(db.prepare('SELECT online_ok FROM strips WHERE share_code = ?').get(code)?.online_ok)
-  }
-
-  it('is given only when the guest shares while the online gallery is on', async () => {
-    const online = booth({ onlineGallery: true })
-    const code = await makeStrip(online)
-    await request(online.server).post(`/api/strips/${code}/visibility`).send({ isPublic: true })
-    expect(onlineOk(online.db, code)).toBe(1)
-    await request(online.server).post(`/api/strips/${code}/visibility`).send({ isPublic: false })
-    expect(onlineOk(online.db, code)).toBe(0)
-
-    const offline = booth()
-    const local = await makeStrip(offline)
-    await request(offline.server).post(`/api/strips/${local}/visibility`).send({ isPublic: true })
-    expect(onlineOk(offline.db, local)).toBe(0)
-  })
-
-  it('is cleared when an admin hides the strip and not given when an admin shows it', async () => {
-    const b = booth({ onlineGallery: true })
-    const code = await makeStrip(b)
-    await request(b.server).post(`/api/strips/${code}/visibility`).send({ isPublic: true })
-    const id = Number(b.db.prepare('SELECT id FROM strips WHERE share_code = ?').get(code)?.id)
-    setStripPublicById(b.db, id, false)
-    expect(onlineOk(b.db, code)).toBe(0)
-    setStripPublicById(b.db, id, true)
-    expect(onlineOk(b.db, code)).toBe(0)
   })
 })
 

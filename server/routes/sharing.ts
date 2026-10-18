@@ -23,7 +23,7 @@ export function sharingRouter(db: Database, shareBaseUrl: () => string, onlineGa
   router.post('/strips/:code/visibility', boothOnly, (req, res) => {
     const isPublic: unknown = req.body?.isPublic
     if (typeof isPublic !== 'boolean') return badRequest(res, 'isPublic must be true or false')
-    setVisibility(db, String(req.params.code), isPublic, onlineGallery)
+    setVisibility(db, String(req.params.code), isPublic)
     res.json({ isPublic })
   })
 

@@ -6,7 +6,7 @@ import { openDatabase } from './db/connection.ts'
 import { runMigrations } from './db/migrate.ts'
 import { installStarterFrames } from './services/catalog.ts'
 import { deleteExpiredSessions } from './services/cleanup.ts'
-import { type CloudBucket, cloudGallerySync } from './services/cloud-gallery.ts'
+import { type CloudBucket, cloudGallerySync, coalescedRunner } from './services/cloud-gallery.ts'
 import { firebaseBucket } from './services/firebase-bucket.ts'
 import { shareBaseUrl } from './services/network.ts'
 
@@ -27,16 +27,15 @@ autoDelete()
 setInterval(autoDelete, AUTO_DELETE_CHECK_MS).unref()
 
 // The online gallery, when configured. Retries every half minute, so strips shared while the
-// internet is down go up once it is back. The booth never waits on it.
+// internet is down go up once it is back. A saved strip also starts a sync straight away, so
+// it shows online within seconds. The booth never waits on it.
 const CLOUD_SYNC_MS = 30_000
 const bucket = connectBucket()
+let syncNow = () => {}
 if (bucket) {
   const sync = cloudGallerySync(db, config.storageDir, bucket)
-  let running = false
   let lastError = ''
-  const cloudSync = async () => {
-    if (running) return
-    running = true
+  const cloudSync = coalescedRunner(async () => {
     try {
       const { uploaded, removed } = await sync()
       if (uploaded > 0 || removed > 0) console.log(`Online gallery: ${uploaded} uploaded, ${removed} removed`)
@@ -46,12 +45,11 @@ if (bucket) {
       const message = errorMessage(error)
       if (message !== lastError) console.log(`Online gallery sync failed, will retry: ${message}`)
       lastError = message
-    } finally {
-      running = false
     }
-  }
-  void cloudSync()
-  setInterval(cloudSync, CLOUD_SYNC_MS).unref()
+  })
+  syncNow = () => void cloudSync()
+  syncNow()
+  setInterval(syncNow, CLOUD_SYNC_MS).unref()
 }
 
 // A bad key file leaves the online gallery off; the booth itself still starts.
@@ -82,6 +80,7 @@ const app = createApp({
   clientDir,
   shareBaseUrl: () => shareBaseUrl(config.port, config.publicHost),
   onlineGallery: bucket !== undefined,
+  onStripSaved: () => syncNow(),
 })
 app.listen(config.port, config.host, (error) => {
   if (error) throw error

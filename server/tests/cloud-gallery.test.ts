@@ -2,7 +2,7 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { Database } from '../db/connection.ts'
-import { type CloudBucket, cloudGallerySync } from '../services/cloud-gallery.ts'
+import { type CloudBucket, cloudGallerySync, coalescedRunner } from '../services/cloud-gallery.ts'
 import { migratedDb, tempDir } from './helpers.ts'
 
 interface StoredFile {
@@ -50,14 +50,22 @@ function booth() {
   return { db, storageDir }
 }
 
-// Shared strips get online consent unless onlineOk says otherwise.
-function addStrip(db: Database, storageDir: string, code: string, isPublic: boolean, createdAt: string, onlineOk = isPublic): void {
+function addStrip(db: Database, storageDir: string, code: string, isPublic: boolean, createdAt: string): void {
   const layoutId = Number(db.prepare('SELECT id FROM layouts WHERE shots = 2').get()?.id)
   const sessionId = Number(db.prepare('INSERT INTO sessions (layout_id) VALUES (?)').run(layoutId).lastInsertRowid)
   writeFileSync(join(storageDir, 'strips', `${code}.png`), `png-${code}`)
-  db.prepare(
-    'INSERT INTO strips (session_id, image_path, share_code, is_public, online_ok, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-  ).run(sessionId, `${code}.png`, code, isPublic ? 1 : 0, onlineOk ? 1 : 0, createdAt)
+  db.prepare('INSERT INTO strips (session_id, image_path, share_code, is_public, created_at) VALUES (?, ?, ?, ?, ?)').run(
+    sessionId,
+    `${code}.png`,
+    code,
+    isPublic ? 1 : 0,
+    createdAt,
+  )
+}
+
+// The way admin delete and auto-delete remove a guest: the session, which cascades to the strip.
+function deleteStrip(db: Database, code: string): void {
+  db.prepare('DELETE FROM sessions WHERE id = (SELECT session_id FROM strips WHERE share_code = ?)').run(code)
 }
 
 function galleryIndex(files: Map<string, StoredFile>): unknown {
@@ -65,11 +73,10 @@ function galleryIndex(files: Map<string, StoredFile>): unknown {
 }
 
 describe('cloud gallery sync', () => {
-  it('uploads only shared strips and a newest-first index', async () => {
+  it('uploads every finished strip, shared on the Wi-Fi gallery or not, with a newest-first index', async () => {
     const { db, storageDir } = booth()
     addStrip(db, storageDir, 'aaaaaaaaaa', true, '2026-10-18 09:00:00')
-    addStrip(db, storageDir, 'bbbbbbbbbb', true, '2026-10-18 10:00:00')
-    addStrip(db, storageDir, 'cccccccccc', false, '2026-10-18 11:00:00')
+    addStrip(db, storageDir, 'bbbbbbbbbb', false, '2026-10-18 10:00:00')
     const { bucket, files } = fakeBucket()
 
     expect(await cloudGallerySync(db, storageDir, bucket)()).toEqual({ uploaded: 2, removed: 0 })
@@ -88,22 +95,14 @@ describe('cloud gallery sync', () => {
     })
   })
 
-  it('keeps a shared strip off the internet when the guest never saw the online wording', async () => {
-    const { db, storageDir } = booth()
-    addStrip(db, storageDir, 'aaaaaaaaaa', true, '2026-10-18 09:00:00', false)
-    const { bucket, files } = fakeBucket()
-    expect(await cloudGallerySync(db, storageDir, bucket)()).toEqual({ uploaded: 0, removed: 0 })
-    expect([...files.keys()]).toEqual(['gallery.json'])
-  })
-
-  it('still drops a withdrawn strip from the index while another upload keeps failing', async () => {
+  it('still drops a deleted strip from the index while another upload keeps failing', async () => {
     const { db, storageDir } = booth()
     addStrip(db, storageDir, 'aaaaaaaaaa', true, '2026-10-18 09:00:00')
     const { bucket, files, fail } = fakeBucket()
     const sync = cloudGallerySync(db, storageDir, bucket)
     await sync()
 
-    db.prepare("UPDATE strips SET is_public = 0, online_ok = 0 WHERE share_code = 'aaaaaaaaaa'").run()
+    deleteStrip(db, 'aaaaaaaaaa')
     addStrip(db, storageDir, 'bbbbbbbbbb', true, '2026-10-18 10:00:00')
     addStrip(db, storageDir, 'cccccccccc', true, '2026-10-18 11:00:00')
     fail('strips/bbbbbbbbbb.png', Infinity)
@@ -123,7 +122,7 @@ describe('cloud gallery sync', () => {
     expect(writes).toEqual([])
   })
 
-  it('removes a strip that was unshared or deleted, before uploading new ones', async () => {
+  it('removes deleted strips before uploading new ones', async () => {
     const { db, storageDir } = booth()
     addStrip(db, storageDir, 'aaaaaaaaaa', true, '2026-10-18 09:00:00')
     addStrip(db, storageDir, 'bbbbbbbbbb', true, '2026-10-18 10:00:00')
@@ -131,9 +130,9 @@ describe('cloud gallery sync', () => {
     const sync = cloudGallerySync(db, storageDir, bucket)
     await sync()
 
-    db.prepare("UPDATE strips SET is_public = 0 WHERE share_code = 'aaaaaaaaaa'").run()
-    db.prepare("DELETE FROM sessions WHERE id = (SELECT session_id FROM strips WHERE share_code = 'bbbbbbbbbb')").run()
-    addStrip(db, storageDir, 'cccccccccc', true, '2026-10-18 11:00:00')
+    deleteStrip(db, 'aaaaaaaaaa')
+    deleteStrip(db, 'bbbbbbbbbb')
+    addStrip(db, storageDir, 'cccccccccc', false, '2026-10-18 11:00:00')
     writes.length = 0
     expect(await sync()).toEqual({ uploaded: 1, removed: 2 })
     expect(writes.slice(0, 2).sort()).toEqual(['remove strips/aaaaaaaaaa.png', 'remove strips/bbbbbbbbbb.png'])
@@ -192,5 +191,39 @@ describe('cloud gallery sync', () => {
     const { bucket, files } = fakeBucket()
     await cloudGallerySync(db, storageDir, bucket)()
     expect(galleryIndex(files)).toEqual({ strips: [] })
+  })
+})
+
+describe('coalesced runner', () => {
+  it('runs again right after the current run when asked mid-run, but only once', async () => {
+    let runs = 0
+    let finish = () => {}
+    const run = coalescedRunner(
+      () =>
+        new Promise<void>((resolve) => {
+          runs += 1
+          finish = resolve
+        }),
+    )
+    const first = run()
+    void run()
+    void run()
+    expect(runs).toBe(1)
+    finish()
+    await first
+    await Promise.resolve()
+    expect(runs).toBe(2)
+    finish()
+  })
+
+  it('keeps working after a run fails', async () => {
+    let runs = 0
+    const run = coalescedRunner(async () => {
+      runs += 1
+      if (runs === 1) throw new Error('offline')
+    })
+    await expect(run()).rejects.toThrow('offline')
+    await run()
+    expect(runs).toBe(2)
   })
 })

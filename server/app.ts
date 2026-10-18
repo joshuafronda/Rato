@@ -20,8 +20,10 @@ export interface AppOptions {
   shareBaseUrl?: () => string
   // Built client to serve (client/dist). Omitted in tests and when Vite serves the client.
   clientDir?: string
-  // Shared strips are also published to the online gallery, so the booth tells guests so.
+  // Finished strips are also posted to the online gallery, so the booth tells guests so.
   onlineGallery?: boolean
+  // Called after a finished strip is saved, to post it online straight away.
+  onStripSaved?: () => void
 }
 
 export function createApp({
@@ -31,6 +33,7 @@ export function createApp({
   clientDir,
   shareBaseUrl = () => 'http://localhost:3000',
   onlineGallery = false,
+  onStripSaved = () => {},
 }: AppOptions): express.Express {
   const app = express()
   app.disable('x-powered-by')
@@ -38,7 +41,7 @@ export function createApp({
 
   app.use('/api', healthRouter(db))
   app.use('/api', catalogRouter(db))
-  app.use('/api', boothRouter(db, storageDir))
+  app.use('/api', boothRouter(db, storageDir, onStripSaved))
   app.use('/api', sharingRouter(db, shareBaseUrl, onlineGallery))
   app.use('/api/admin', adminRouter({ db, storageDir, backupDir }))
   app.use('/api', (_req, res) => {

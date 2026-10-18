@@ -9,7 +9,7 @@ const photoBody = express.raw({ type: IMAGE_TYPES, limit: '15mb' })
 const stripBody = express.raw({ type: IMAGE_TYPES, limit: '25mb' })
 
 // The guest flow: start a session, upload the shots, upload the finished strip.
-export function boothRouter(db: Database, storageDir: string): Router {
+export function boothRouter(db: Database, storageDir: string, onStripSaved: () => void): Router {
   const router = Router()
 
   router.post('/sessions', boothOnly, (req, res) => {
@@ -33,7 +33,9 @@ export function boothRouter(db: Database, storageDir: string): Router {
   router.post('/sessions/:id/strip', boothOnly, stripBody, (req, res) => {
     const sessionId = positiveInteger(req.params.id)
     if (sessionId === null) return badRequest(res, 'Session not found', 404)
-    res.status(201).json(saveStripFile(db, storageDir, sessionId, imageBody(req.body, 'Send the strip as a PNG image')))
+    const strip = saveStripFile(db, storageDir, sessionId, imageBody(req.body, 'Send the strip as a PNG image'))
+    onStripSaved()
+    res.status(201).json(strip)
   })
 
   router.get('/strips/:code', (req, res) => {

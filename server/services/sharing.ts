@@ -19,14 +19,13 @@ export interface Gallery {
 export interface ShareLink {
   url: string
   qrSvg: string
-  // Sharing this strip also publishes it to the online gallery.
+  // Every finished strip is also posted to the online gallery, so the booth tells the guest.
   onlineGallery: boolean
 }
 
 // The guest's choice: only strips they agree to share appear in the gallery.
-// With the online gallery on, the booth told the guest that sharing publishes online.
-export function setVisibility(db: Database, shareCode: string, isPublic: boolean, onlineGallery: boolean): void {
-  if (!SHARE_CODE_PATTERN.test(shareCode) || !setStripPublic(db, shareCode, isPublic, isPublic && onlineGallery)) {
+export function setVisibility(db: Database, shareCode: string, isPublic: boolean): void {
+  if (!SHARE_CODE_PATTERN.test(shareCode) || !setStripPublic(db, shareCode, isPublic)) {
     throw new RequestError(404, 'Strip not found')
   }
 }

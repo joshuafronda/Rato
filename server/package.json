@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch index.ts",
-    "start": "node index.ts",
+    "dev": "node --env-file-if-exists=../.env --watch index.ts",
+    "start": "node --env-file-if-exists=../.env index.ts",
     "test": "vitest run",
     "lint": "tsc --noEmit"
   },
