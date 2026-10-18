@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Rato Photo Gallery</title>
-    <meta name="description" content="Photo strips guests shared from the Rato photo booth." />
+    <meta name="description" content="Photo strips from the Rato photo booth." />
     <link rel="icon" href="rato-icon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -177,7 +177,7 @@
         <img src="rato-icon.svg" alt="" />
         <div>
           <h1 class="title">Photo gallery</h1>
-          <p class="caption">Strips guests shared from the photo booth. Tap one to see it full size and save it.</p>
+          <p class="caption">Photo strips from the booth, posted as soon as they are made. Tap one to see it full size and save it.</p>
         </div>
       </header>
       <p class="message" id="status">Loading the photos…</p>
@@ -193,8 +193,8 @@
     </dialog>
 
     <script>
-      // Reads the list the booth laptop uploads (gallery.json) from Firebase Storage. The booth
-      // only uploads strips a guest chose to share online.
+      // Reads the list the booth laptop uploads (gallery.json) from Firebase Storage: every
+      // finished strip, posted within seconds of being saved.
       const BUCKET = 'rato-d2428.firebasestorage.app'
       const STORAGE = `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/`
       const REFRESH_MS = 10_000
