@@ -1,4 +1,4 @@
-# StripShot
+# Rato
 
 Offline photo booth web app (booth screen, guest gallery, admin dashboard) that runs on one
 Windows laptop. Built with the BrewedOps Agentic Framework (https://brewedops.cloud/framework).
@@ -80,7 +80,7 @@ Full spec: `Build - Specs/prompt.md`.
 ## Notes (long-term memory)
 - Notes folder: TBD (plain Markdown).
 - Search it before any web search when a task touches past work or decisions.
-- On "save progress": a dated note under `10 - Projects/StripShot/` - what changed, what went
+- On "save progress": a dated note under `10 - Projects/Rato/` - what changed, what went
   wrong, what to remember - then commit and push.
 
 ## House rules

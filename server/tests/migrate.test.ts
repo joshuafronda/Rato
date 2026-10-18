@@ -27,7 +27,7 @@ function memoryDb(): Database {
 }
 
 function tempDir(files: Record<string, string> = {}): string {
-  const dir = mkdtempSync(join(tmpdir(), 'stripshot-migrate-'))
+  const dir = mkdtempSync(join(tmpdir(), 'rato-migrate-'))
   tempDirs.push(dir)
   for (const [name, sql] of Object.entries(files)) writeFileSync(join(dir, name), sql)
   return dir

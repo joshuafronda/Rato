@@ -18,9 +18,9 @@ function migratedDb(): Database {
 }
 
 function clientDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'stripshot-client-'))
+  const dir = mkdtempSync(join(tmpdir(), 'rato-client-'))
   tempDirs.push(dir)
-  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>StripShot</title>')
+  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>Rato</title>')
   return dir
 }
 
@@ -67,7 +67,7 @@ describe('client pages', () => {
   it('serves index.html for booth routes', async () => {
     const res = await request(createApp({ db: migratedDb(), clientDir: clientDir() })).get('/booth')
     expect(res.status).toBe(200)
-    expect(res.text).toContain('<title>StripShot</title>')
+    expect(res.text).toContain('<title>Rato</title>')
   })
 
   it('returns a JSON 404 for a missing asset instead of index.html', async () => {

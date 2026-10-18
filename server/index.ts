@@ -17,5 +17,5 @@ const app = createApp({ db, clientDir })
 app.listen(config.port, config.host, (error) => {
   if (error) throw error
   const shown = config.host === '0.0.0.0' ? 'localhost' : config.host
-  console.log(`StripShot running at http://${shown}:${config.port}`)
+  console.log(`Rato running at http://${shown}:${config.port}`)
 })

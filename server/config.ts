@@ -13,7 +13,7 @@ export const config = {
   clientDir: join(ROOT, 'client', 'dist'),
 }
 
-export const databasePath = join(config.storageDir, 'stripshot.db')
+export const databasePath = join(config.storageDir, 'rato.db')
 export const storageFolders = ['photos', 'strips', 'frames'].map((name) => join(config.storageDir, name))
 
 export function parsePort(value: string | undefined): number {

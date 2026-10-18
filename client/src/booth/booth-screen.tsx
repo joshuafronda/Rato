@@ -19,7 +19,7 @@ export function BoothScreen() {
   return (
     <main className="booth">
       <header className="booth-header">
-        <h1>StripShot</h1>
+        <h1>Rato</h1>
         {cameras.length > 1 && (
           <label className="camera-picker">
             Camera

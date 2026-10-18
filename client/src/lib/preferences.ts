@@ -1,6 +1,6 @@
 // Per-device conveniences (which camera this booth screen uses). Never required state:
 // storage can be blocked, so every read and write falls back silently.
-const PREFIX = 'stripshot.'
+const PREFIX = 'rato.'
 
 export function readPreference(key: string): string | null {
   try {
