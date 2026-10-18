@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="1800" viewBox="0 0 600 1800">
+  <!-- Transparent inside, so the shots show through. Matches the composer's 600x1800 strip. -->
+  <path fill="#ff5c8a" fill-rule="evenodd" d="M0 0H600V1800H0Z M30 30V1770H570V30Z"/>
+  <g>
+    <circle cx="70" cy="1580" r="12" fill="#ffd166"/>
+    <circle cx="110" cy="1650" r="8" fill="#06d6a0"/>
+    <circle cx="80" cy="1720" r="10" fill="#118ab2"/>
+    <circle cx="530" cy="1580" r="10" fill="#06d6a0"/>
+    <circle cx="490" cy="1660" r="12" fill="#118ab2"/>
+    <circle cx="525" cy="1725" r="8" fill="#ffd166"/>
+  </g>
+</svg>

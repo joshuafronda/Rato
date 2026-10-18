@@ -1,23 +1,30 @@
-import { extname } from 'node:path'
+import { extname, join } from 'node:path'
 import express, { type ErrorRequestHandler } from 'express'
 import type { Database } from './db/connection.ts'
+import { catalogRouter } from './routes/catalog.ts'
 import { healthRouter } from './routes/health.ts'
+import { FRAMES_URL } from './services/catalog.ts'
 
 export interface AppOptions {
   db: Database
+  // The storage folder (photos/, strips/, frames/).
+  storageDir: string
   // Built client to serve (client/dist). Omitted in tests and when Vite serves the client.
   clientDir?: string
 }
 
-export function createApp({ db, clientDir }: AppOptions): express.Express {
+export function createApp({ db, storageDir, clientDir }: AppOptions): express.Express {
   const app = express()
   app.disable('x-powered-by')
   app.use(express.json({ limit: '1mb' }))
 
   app.use('/api', healthRouter(db))
+  app.use('/api', catalogRouter(db))
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Not found' })
   })
+
+  app.use(FRAMES_URL, express.static(join(storageDir, 'frames'), { setHeaders: lockDownImage }))
 
   if (clientDir) {
     app.use(express.static(clientDir))
@@ -34,6 +41,12 @@ export function createApp({ db, clientDir }: AppOptions): express.Express {
   })
   app.use(jsonErrors)
   return app
+}
+
+// Frames can be SVG, which a browser would run scripts in if opened directly. Images only.
+function lockDownImage(res: express.Response): void {
+  res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'")
+  res.setHeader('X-Content-Type-Options', 'nosniff')
 }
 
 const CLIENT_ERROR_MESSAGES: Record<number, string> = {
