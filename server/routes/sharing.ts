@@ -8,7 +8,7 @@ import { badRequest, positiveInteger } from './http.ts'
 const GALLERY_LIMIT = 60
 
 // Printing, share links and the public gallery.
-export function sharingRouter(db: Database, shareBaseUrl: () => string): Router {
+export function sharingRouter(db: Database, shareBaseUrl: () => string, onlineGallery: boolean): Router {
   const router = Router()
 
   router.get('/gallery', (req, res) => {
@@ -17,7 +17,7 @@ export function sharingRouter(db: Database, shareBaseUrl: () => string): Router 
   })
 
   router.get('/strips/:code/share', async (req, res) => {
-    res.json(await shareLink(db, shareBaseUrl(), req.params.code))
+    res.json(await shareLink(db, shareBaseUrl(), req.params.code, onlineGallery))
   })
 
   router.post('/strips/:code/visibility', boothOnly, (req, res) => {

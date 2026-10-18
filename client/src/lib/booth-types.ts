@@ -55,6 +55,8 @@ export interface Gallery {
 export interface ShareLink {
   url: string
   qrSvg: string
+  // Sharing this strip also publishes it to the online gallery.
+  onlineGallery: boolean
 }
 
 export interface PrintJob {

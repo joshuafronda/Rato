@@ -20,6 +20,8 @@ export interface AppOptions {
   shareBaseUrl?: () => string
   // Built client to serve (client/dist). Omitted in tests and when Vite serves the client.
   clientDir?: string
+  // Shared strips are also published to the online gallery, so the booth tells guests so.
+  onlineGallery?: boolean
 }
 
 export function createApp({
@@ -28,6 +30,7 @@ export function createApp({
   backupDir = join(storageDir, '..', 'backups'),
   clientDir,
   shareBaseUrl = () => 'http://localhost:3000',
+  onlineGallery = false,
 }: AppOptions): express.Express {
   const app = express()
   app.disable('x-powered-by')
@@ -36,7 +39,7 @@ export function createApp({
   app.use('/api', healthRouter(db))
   app.use('/api', catalogRouter(db))
   app.use('/api', boothRouter(db, storageDir))
-  app.use('/api', sharingRouter(db, shareBaseUrl))
+  app.use('/api', sharingRouter(db, shareBaseUrl, onlineGallery))
   app.use('/api/admin', adminRouter({ db, storageDir, backupDir }))
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Not found' })

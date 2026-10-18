@@ -16,6 +16,8 @@ interface FinishStepProps {
 type PrintState = { status: 'idle' } | { status: 'sending' } | { status: 'sent'; copies: number } | { status: 'error'; message: string }
 
 const COPY_CHOICES = [1, 2, 3]
+const GALLERY_LABEL = 'Show my strip in the gallery'
+const ONLINE_GALLERY_LABEL = 'Show my strip in the online gallery (anyone with the link can see it)'
 
 export function FinishStep({ strip, onPrintQueued, onDone }: FinishStepProps) {
   const [link, setLink] = useState<ShareLink | null>(null)
@@ -104,9 +106,11 @@ export function FinishStep({ strip, onPrintQueued, onDone }: FinishStepProps) {
             ) : (
               <p className="caption">Loading the QR code…</p>
             )}
+            {/* Disabled until the link loads, so the guest consents to the right wording. */}
             <Toggle
-              label="Show my strip in the gallery"
+              label={link?.onlineGallery ? ONLINE_GALLERY_LABEL : GALLERY_LABEL}
               checked={isPublic}
+              disabled={!link}
               onChange={(event) => void toggleGallery(event.target.checked)}
             />
             {shareError && <ErrorBanner message={shareError} />}

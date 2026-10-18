@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { Database } from '../db/connection.ts'
 import { listAllPublicStrips } from '../db/strip-queries.ts'
@@ -14,44 +15,47 @@ export interface CloudBucket {
 
 const STRIPS_PREFIX = 'strips/'
 const INDEX_PATH = 'gallery.json'
-// A strip never changes once saved; the index changes whenever a guest shares one.
-const STRIP_CACHE = 'public, max-age=31536000, immutable'
+// Short and private, so a strip a guest unshares stops being served from caches within the hour.
+const STRIP_CACHE = 'private, max-age=3600'
 const INDEX_CACHE = 'no-cache'
 
-// Makes the bucket match the shared strips: uploads what is missing, removes what was unshared
-// or deleted, then rewrites the index if anything changed. Safe to run again after a failure.
-export async function syncCloudGallery(
+// Returns a sync that makes the bucket match the shared strips: removes what was unshared or
+// deleted first (so a failing upload never delays a take-down), uploads what is missing, then
+// rewrites the index whenever it differs from the last one written. A failed run is simply
+// finished by the next one.
+export function cloudGallerySync(
   db: Database,
   storageDir: string,
   bucket: CloudBucket,
-): Promise<{ uploaded: number; removed: number }> {
-  // A strip whose file is gone is left out, so one missing file cannot block the rest.
-  const shared = galleryEnabled(db) ? listAllPublicStrips(db) : []
-  const strips = shared.filter((strip) => existsSync(join(storageDir, 'strips', strip.image_path)))
-  const wanted = new Map(strips.map((strip) => [`${STRIPS_PREFIX}${strip.share_code}.png`, strip.image_path]))
-  const online = new Set(await bucket.list(''))
+): () => Promise<{ uploaded: number; removed: number }> {
+  let lastIndex = ''
+  return async () => {
+    // A strip whose file is gone is left out, so one missing file cannot block the rest.
+    const shared = galleryEnabled(db) ? listAllPublicStrips(db) : []
+    const strips = shared.filter((strip) => existsSync(join(storageDir, 'strips', strip.image_path)))
+    const wanted = new Map(strips.map((strip) => [`${STRIPS_PREFIX}${strip.share_code}.png`, strip.image_path]))
+    const online = await bucket.list(STRIPS_PREFIX)
 
-  let uploaded = 0
-  for (const [path, imagePath] of wanted) {
-    if (online.has(path)) continue
-    const data = readFileSync(join(storageDir, 'strips', imagePath))
-    await bucket.upload(path, data, { contentType: 'image/png', cacheControl: STRIP_CACHE })
-    uploaded += 1
-  }
+    let removed = 0
+    for (const path of online) {
+      if (wanted.has(path)) continue
+      await bucket.remove(path)
+      removed += 1
+    }
 
-  let removed = 0
-  for (const path of online) {
-    if (!path.startsWith(STRIPS_PREFIX) || wanted.has(path)) continue
-    await bucket.remove(path)
-    removed += 1
-  }
+    let uploaded = 0
+    for (const [path, imagePath] of wanted) {
+      if (online.includes(path)) continue
+      const data = await readFile(join(storageDir, 'strips', imagePath))
+      await bucket.upload(path, data, { contentType: 'image/png', cacheControl: STRIP_CACHE })
+      uploaded += 1
+    }
 
-  if (uploaded > 0 || removed > 0 || !online.has(INDEX_PATH)) {
-    const index = { strips: strips.map((strip) => ({ code: strip.share_code, createdAt: strip.created_at })) }
-    await bucket.upload(INDEX_PATH, Buffer.from(JSON.stringify(index)), {
-      contentType: 'application/json',
-      cacheControl: INDEX_CACHE,
-    })
+    const index = JSON.stringify({ strips: strips.map((strip) => ({ code: strip.share_code, createdAt: strip.created_at })) })
+    if (index !== lastIndex) {
+      await bucket.upload(INDEX_PATH, Buffer.from(index), { contentType: 'application/json', cacheControl: INDEX_CACHE })
+      lastIndex = index
+    }
+    return { uploaded, removed }
   }
-  return { uploaded, removed }
 }

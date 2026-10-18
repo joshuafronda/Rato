@@ -74,7 +74,17 @@ describe('share link', () => {
     expect(res.status).toBe(200)
     expect(res.body.url).toBe(`http://192.168.1.20:3000/s/${code}`)
     expect(res.body.qrSvg).toMatch(/^<svg[^>]*>.*<path/s)
+    expect(res.body.onlineGallery).toBe(false)
     expect((await request(b.server).get('/api/strips/abcdefghjk/share')).status).toBe(404)
+  })
+
+  it('tells the booth when shared strips also go to the online gallery', async () => {
+    const db = migratedDb()
+    const storageDir = tempDir('rato-storage-')
+    for (const folder of ['photos', 'strips', 'frames']) mkdirSync(join(storageDir, folder))
+    const server = createApp({ db, storageDir, onlineGallery: true })
+    const code = await makeStrip({ db, server })
+    expect((await request(server).get(`/api/strips/${code}/share`)).body.onlineGallery).toBe(true)
   })
 })
 

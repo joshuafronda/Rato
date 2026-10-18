@@ -6,7 +6,7 @@ import { openDatabase } from './db/connection.ts'
 import { runMigrations } from './db/migrate.ts'
 import { installStarterFrames } from './services/catalog.ts'
 import { deleteExpiredSessions } from './services/cleanup.ts'
-import { type CloudBucket, syncCloudGallery } from './services/cloud-gallery.ts'
+import { type CloudBucket, cloudGallerySync } from './services/cloud-gallery.ts'
 import { firebaseBucket } from './services/firebase-bucket.ts'
 import { shareBaseUrl } from './services/network.ts'
 
@@ -31,18 +31,19 @@ setInterval(autoDelete, AUTO_DELETE_CHECK_MS).unref()
 const CLOUD_SYNC_MS = 30_000
 const bucket = connectBucket()
 if (bucket) {
+  const sync = cloudGallerySync(db, config.storageDir, bucket)
   let running = false
   let lastError = ''
   const cloudSync = async () => {
     if (running) return
     running = true
     try {
-      const { uploaded, removed } = await syncCloudGallery(db, config.storageDir, bucket)
+      const { uploaded, removed } = await sync()
       if (uploaded > 0 || removed > 0) console.log(`Online gallery: ${uploaded} uploaded, ${removed} removed`)
       lastError = ''
     } catch (error) {
       // Logged once per new error, not every 30 seconds while offline.
-      const message = error instanceof Error ? error.message : String(error)
+      const message = errorMessage(error)
       if (message !== lastError) console.log(`Online gallery sync failed, will retry: ${message}`)
       lastError = message
     } finally {
@@ -62,9 +63,13 @@ function connectBucket(): CloudBucket | undefined {
   try {
     return firebaseBucket(config.firebaseBucket, config.firebaseKeyFile)
   } catch (error) {
-    console.log(`Online gallery off - could not load the Firebase key: ${error instanceof Error ? error.message : error}`)
+    console.log(`Online gallery off - could not load the Firebase key: ${errorMessage(error)}`)
     return undefined
   }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }
 
 const clientDir = existsSync(config.clientDir) ? config.clientDir : undefined
@@ -76,6 +81,7 @@ const app = createApp({
   backupDir: config.backupDir,
   clientDir,
   shareBaseUrl: () => shareBaseUrl(config.port, config.publicHost),
+  onlineGallery: bucket !== undefined,
 })
 app.listen(config.port, config.host, (error) => {
   if (error) throw error

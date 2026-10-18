@@ -19,6 +19,8 @@ export interface Gallery {
 export interface ShareLink {
   url: string
   qrSvg: string
+  // Sharing this strip also publishes it to the online gallery.
+  onlineGallery: boolean
 }
 
 // The guest's choice: only strips they agree to share appear in the gallery.
@@ -43,11 +45,16 @@ export function galleryEnabled(db: Database): boolean {
 }
 
 // The link a phone opens to see one strip, and its QR code.
-export async function shareLink(db: Database, baseUrl: string, shareCode: string): Promise<ShareLink> {
+export async function shareLink(
+  db: Database,
+  baseUrl: string,
+  shareCode: string,
+  onlineGallery: boolean,
+): Promise<ShareLink> {
   if (!SHARE_CODE_PATTERN.test(shareCode) || findStripVisibility(db, shareCode) === undefined) {
     throw new RequestError(404, 'Strip not found')
   }
   const url = `${baseUrl}/s/${shareCode}`
   const qrSvg = await QRCode.toString(url, { type: 'svg', margin: 1, errorCorrectionLevel: 'M' })
-  return { url, qrSvg }
+  return { url, qrSvg, onlineGallery }
 }
