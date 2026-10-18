@@ -2,6 +2,7 @@ import { canvasToBlob } from '../lib/canvas-to-blob.ts'
 import { filterCss, grainAmount } from './filter-style.ts'
 import { grainTile } from './grain.ts'
 import type { Slot } from '../lib/booth-types.ts'
+import { frameLayout, pixelsOf } from '../lib/frame-analysis.ts'
 import { STRIP, coverCrop, stripSlots } from './strip-layout.ts'
 
 /** Anything drawable that knows its own size: an ImageBitmap, a decoded <img>. */
@@ -41,6 +42,10 @@ export async function composeStrip(request: StripRequest): Promise<Blob> {
   const shots = await Promise.all(request.shots.map((shot) => createImageBitmap(shot)))
   try {
     const frame = request.frameUrl ? await loadImage(request.frameUrl) : null
+    // The frame image itself decides where the photos go and whether the text fits, so a
+    // frame works even if it was saved without its windows.
+    const fit = frame ? frameLayout(pixelsOf(frame), shots.length) : { slots: null, showText: true }
+    const text = fit.showText ? request : { caption: '', caption2: '', dateText: '' }
     const canvas = document.createElement('canvas')
     canvas.width = STRIP.width
     canvas.height = STRIP.height
@@ -52,10 +57,10 @@ export async function composeStrip(request: StripRequest): Promise<Blob> {
       grain: grainAmount(request.filterParams),
       grainTile: grainTile(),
       frame,
-      slots: request.slots,
-      caption: request.caption,
-      caption2: request.caption2,
-      dateText: request.dateText,
+      slots: request.slots ?? fit.slots,
+      caption: text.caption,
+      caption2: text.caption2,
+      dateText: text.dateText,
     })
     return await canvasToBlob(canvas, 'image/png')
   } finally {

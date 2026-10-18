@@ -84,18 +84,60 @@ function fillArea(clear: Uint8Array, seen: Uint8Array, columns: number, rows: nu
   return box
 }
 
+// The footer box the date and caption lines are drawn in (see STRIP.dateY/caption2Y).
+const TEXT_AREA = { x: 110, y: 1580, width: 380, height: 160 }
+const LIGHT = 200
+const CLEAR_SHARE = 0.9
+
+// True when the caption area is see-through or light, so dark text drawn there is readable
+// and covers nothing. A frame with its own artwork there (like the church frame's service
+// times) gets no date or caption lines.
+export function textAreaIsClear(image: Pixels): boolean {
+  const scaleX = image.width / STRIP.width
+  const scaleY = image.height / STRIP.height
+  let clear = 0
+  let total = 0
+  for (let y = TEXT_AREA.y; y < TEXT_AREA.y + TEXT_AREA.height; y += CELL) {
+    for (let x = TEXT_AREA.x; x < TEXT_AREA.x + TEXT_AREA.width; x += CELL) {
+      const i = (Math.floor(y * scaleY) * image.width + Math.floor(x * scaleX)) * 4
+      const [r, g, b, a] = [image.data[i], image.data[i + 1], image.data[i + 2], image.data[i + 3]]
+      if (a < SEE_THROUGH || 0.299 * r + 0.587 * g + 0.114 * b >= LIGHT) clear += 1
+      total += 1
+    }
+  }
+  return clear / total >= CLEAR_SHARE
+}
+
+export interface FrameLayout {
+  /** The frame's own photo windows, or null to use the layout's standard holes. */
+  slots: PhotoWindow[] | null
+  showText: boolean
+}
+
+// How a strip fits a frame, read from the frame image itself: its windows when there is one
+// per photo, and whether the date and captions have a clear place to go.
+export function frameLayout(image: Pixels, shots: number): FrameLayout {
+  const windows = findPhotoWindows(image)
+  return { slots: windows.length === shots ? windows : null, showText: textAreaIsClear(image) }
+}
+
 // Reads a frame file in the browser and finds its windows.
 export async function photoWindowsOf(file: Blob): Promise<PhotoWindow[]> {
   const bitmap = await createImageBitmap(file)
   try {
-    const canvas = document.createElement('canvas')
-    canvas.width = bitmap.width
-    canvas.height = bitmap.height
-    const context = canvas.getContext('2d')
-    if (!context) throw new Error('Canvas 2D is not available')
-    context.drawImage(bitmap, 0, 0)
-    return findPhotoWindows(context.getImageData(0, 0, bitmap.width, bitmap.height))
+    return findPhotoWindows(pixelsOf(bitmap))
   } finally {
     bitmap.close()
   }
+}
+
+// The pixels of a loaded image at strip size (600 x 1800).
+export function pixelsOf(image: CanvasImageSource): Pixels {
+  const canvas = document.createElement('canvas')
+  canvas.width = STRIP.width
+  canvas.height = STRIP.height
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  if (!context) throw new Error('Canvas 2D is not available')
+  context.drawImage(image, 0, 0, STRIP.width, STRIP.height)
+  return context.getImageData(0, 0, STRIP.width, STRIP.height)
 }

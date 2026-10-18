@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { type AdminFrame, type AdminLayout, adminApi } from '../lib/admin-api.ts'
-import { type PhotoWindow, photoWindowsOf } from '../lib/photo-windows.ts'
+import { type PhotoWindow, photoWindowsOf } from '../lib/frame-analysis.ts'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import { Card } from '../ui/card.tsx'
