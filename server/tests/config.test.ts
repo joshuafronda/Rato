@@ -11,7 +11,7 @@ describe('parsePort', () => {
     expect(parsePort('3100')).toBe(3100)
   })
 
-  it.each(['abc', '0', '70000', '30.5'])('refuses %s with a clear message', (value) => {
+  it.each(['abc', '0', '70000', '30.5', '0x0BB8', '3e3', ' 3000 '])('refuses %s with a clear message', (value) => {
     expect(() => parsePort(value)).toThrow(/PORT must be a whole number/)
   })
 })

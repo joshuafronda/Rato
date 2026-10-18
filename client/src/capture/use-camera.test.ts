@@ -95,10 +95,19 @@ describe('useCamera', () => {
   it('falls back to the default camera when the remembered one is gone, and forgets it', async () => {
     writePreference('cameraId', 'unplugged')
     failNext.push(domError('NotFoundError'))
+    const getUserMedia = navigator.mediaDevices.getUserMedia as ReturnType<typeof vi.fn>
     const { result } = renderHook(() => useCamera())
     await waitFor(() => expect(result.current.state.status).toBe('live'))
+    const firstAsked = getUserMedia.mock.calls[0][0] as MediaStreamConstraints
+    expect((firstAsked.video as MediaTrackConstraints).deviceId).toEqual({ exact: 'unplugged' })
     expect(deviceOf(calls[0])).toBeUndefined()
     expect(readPreference('cameraId')).toBeNull()
+  })
+
+  it('shows "no camera found" when there is no camera at all, instead of starting forever', async () => {
+    failNext.push(domError('NotFoundError'))
+    const { result } = renderHook(() => useCamera())
+    await waitFor(() => expect(result.current.state).toEqual({ status: 'error', kind: 'not-found' }))
   })
 
   it('shows the error kind and recovers on retry', async () => {

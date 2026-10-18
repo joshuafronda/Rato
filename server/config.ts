@@ -18,7 +18,8 @@ export const storageFolders = ['photos', 'strips', 'frames'].map((name) => join(
 
 export function parsePort(value: string | undefined): number {
   if (value === undefined || value === '') return DEFAULT_PORT
-  const port = Number(value)
+  // Digits only: Number() would also accept '0x0BB8', '3e3' and ' 3000 '.
+  const port = /^\d+$/.test(value) ? Number(value) : NaN
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error(`PORT must be a whole number from 1 to 65535, got "${value}"`)
   }
