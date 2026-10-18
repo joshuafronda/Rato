@@ -48,9 +48,13 @@ Full spec: `Build - Specs/prompt.md`.
 - Deploy command: TBD | Rollback: TBD
 - CI (`.github/workflows/ci.yml`): TBD - added once the repo has a GitHub remote.
 - Once CI exists, after ANY dependency change: `gh workflow run relock.yml`, `git pull`,
-  `gh workflow run ci.yml`. Until then: after `npm install <pkg>`, delete `node_modules` and
-  `package-lock.json` and run `npm install` again - npm otherwise drops the Windows native
-  binding Vite/Vitest need (npm/cli#4828).
+  `gh workflow run ci.yml`.
+- Windows native bindings: npm can drop platform packages from the lockfile (npm/cli#4828),
+  which breaks Vite/Vitest with "Cannot find native binding". The root `package.json` pins
+  `@rolldown/binding-win32-x64-msvc` and `lightningcss-win32-x64-msvc` as optionalDependencies
+  so npm always keeps them. When Vite is upgraded, bump both to the versions of `rolldown` and
+  `lightningcss` in the lockfile (`npm ls rolldown lightningcss`). To set up a fresh checkout,
+  prefer `npm ci`.
 
 ## Running it
 - Development: `npm run dev` (Express API on :3000) and, in a second terminal,
