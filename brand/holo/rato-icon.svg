@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Rato"><title>Rato</title><defs>
+  <clipPath id="i-clip"><rect width="512" height="512" rx="116"/></clipPath>
+  <filter id="i-mesh" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="58"/></filter>
+  <radialGradient id="i-gloss" cx="0.3" cy="0.18" r="0.7"><stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="0.45" stop-color="#fff" stop-opacity="0.08"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <linearGradient id="i-edge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.65"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.08"/><stop offset="1" stop-color="#fff" stop-opacity="0.35"/></linearGradient>
+  <filter id="i-letter" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#2A1270" flood-opacity="0.35"/></filter>
+</defs><g clip-path="url(#i-clip)">
+  <rect width="512" height="512" fill="#6D5BFF"/>
+  <g filter="url(#i-mesh)"><circle cx="70" cy="60" r="230" fill="#22D3EE"/><circle cx="440" cy="40" r="210" fill="#3B82F6"/><circle cx="300" cy="250" r="200" fill="#7C3AED"/><circle cx="40" cy="430" r="220" fill="#E879F9"/><circle cx="470" cy="470" r="230" fill="#34D399"/><circle cx="230" cy="520" r="150" fill="#A78BFA"/></g>
+  <rect width="512" height="512" fill="url(#i-gloss)"/>
+</g>
+<rect x="3" y="3" width="506" height="506" rx="113" fill="none" stroke="url(#i-edge)" stroke-width="6"/><path filter="url(#i-letter)" transform="matrix(0.40268 0 0 -0.40268 116.6 406.0)" d="M66 0V745H351Q428 745 487.5 718.0Q547 691 581.0 638.0Q615 585 615 507Q615 431 580.0 377.5Q545 324 486 297L656 0H482L298 329L398 270H221V0ZM221 405H352Q385 405 409.0 418.0Q433 431 446.5 454.0Q460 477 460 507Q460 538 446.5 561.0Q433 584 409.0 597.0Q385 610 352 610H221Z" fill="#FFFFFF"/></svg>
