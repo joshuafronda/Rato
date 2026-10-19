@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Rato"><title>Rato</title><defs>
+  <clipPath id="tile-clip"><rect width="512" height="512" rx="113"/></clipPath>
+  <filter id="mesh" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="58"/></filter>
+  <radialGradient id="gloss" cx="0.3" cy="0.18" r="0.7"><stop offset="0" stop-color="#fff" stop-opacity="0.5"/><stop offset="0.45" stop-color="#fff" stop-opacity="0.07"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.65"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.08"/><stop offset="1" stop-color="#fff" stop-opacity="0.35"/></linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22D3EE"/><stop offset="0.35" stop-color="#3B82F6"/><stop offset="0.65" stop-color="#7C3AED"/><stop offset="1" stop-color="#E879F9"/></linearGradient>
+  <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22D3EE"/><stop offset="0.3" stop-color="#3B82F6"/><stop offset="0.55" stop-color="#7C3AED"/><stop offset="0.8" stop-color="#E879F9"/><stop offset="1" stop-color="#34D399"/></linearGradient>
+</defs><g transform="translate(0 0) scale(1.00000)">
+  <g clip-path="url(#tile-clip)"><rect width="512" height="512" fill="#6D5BFF"/><g filter="url(#mesh)"><circle cx="70" cy="60" r="230" fill="#22D3EE"/><circle cx="440" cy="40" r="210" fill="#3B82F6"/><circle cx="300" cy="250" r="200" fill="#7C3AED"/><circle cx="40" cy="430" r="220" fill="#E879F9"/><circle cx="470" cy="470" r="230" fill="#34D399"/><circle cx="230" cy="520" r="150" fill="#A78BFA"/></g>
+  <rect width="512" height="512" fill="url(#gloss)"/></g>
+  <rect x="3" y="3" width="506" height="506" rx="110" fill="none" stroke="url(#edge)" stroke-width="6"/>
+  <rect x="358" y="72" width="72" height="41" rx="15" fill="#FFFFFF" opacity="0.92"/>
+  <circle cx="256.0" cy="282.0" r="142.7" fill="none" stroke="#FFFFFF" stroke-width="62.6"/>
+    <circle cx="256.0" cy="282.0" r="111.4" fill="url(#glass)"/>
+    <path d="M256.0 241.9L330.3 199.0 M290.7 262.0L365.0 304.8 M290.7 302.0L290.7 387.8 M256.0 322.1L181.7 365.0 M221.3 302.0L147.0 259.2 M221.3 262.0L221.3 176.2" stroke="#1B1446" stroke-width="7.8" stroke-linecap="round"/>
+    <path d="M256.0 241.9 L290.7 262.0 L290.7 302.0 L256.0 322.1 L221.3 302.0 L221.3 262.0Z" fill="#120B33"/>
+    <circle cx="209.2" cy="235.2" r="14.5" fill="#FFFFFF"/>
+</g></svg>
