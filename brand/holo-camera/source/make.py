@@ -65,8 +65,8 @@ def holo_defs():
     return f"""<defs>
   <clipPath id="tile-clip"><rect width="512" height="512" rx="113"/></clipPath>
   <filter id="mesh" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="58"/></filter>
+  <filter id="halo" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="24"/></filter>
   <radialGradient id="gloss" cx="0.3" cy="0.18" r="0.7"><stop offset="0" stop-color="#fff" stop-opacity="0.5"/><stop offset="0.45" stop-color="#fff" stop-opacity="0.07"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
-  <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.65"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.08"/><stop offset="1" stop-color="#fff" stop-opacity="0.35"/></linearGradient>
   <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22D3EE"/><stop offset="0.35" stop-color="#3B82F6"/><stop offset="0.65" stop-color="#7C3AED"/><stop offset="1" stop-color="#E879F9"/></linearGradient>
   <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22D3EE"/><stop offset="0.3" stop-color="#3B82F6"/><stop offset="0.55" stop-color="#7C3AED"/><stop offset="0.8" stop-color="#E879F9"/><stop offset="1" stop-color="#34D399"/></linearGradient>
 </defs>"""
@@ -76,9 +76,9 @@ def icon(x, y, size):
     s = size / 512
     tile = ''.join(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{c}"/>' for cx, cy, r, c in BLOBS)
     return f"""<g transform="translate({x} {y}) scale({s:.5f})">
+  <g filter="url(#halo)" transform="translate(256 256) scale(1.05) translate(-256 -256)"><g clip-path="url(#tile-clip)"><rect width="512" height="512" fill="#6D5BFF"/><g filter="url(#mesh)">{tile}</g></g></g>
   <g clip-path="url(#tile-clip)"><rect width="512" height="512" fill="#6D5BFF"/><g filter="url(#mesh)">{tile}</g>
   <rect width="512" height="512" fill="url(#gloss)"/></g>
-  <rect x="3" y="3" width="506" height="506" rx="110" fill="none" stroke="url(#edge)" stroke-width="6"/>
   <rect x="358" y="72" width="72" height="41" rx="15" fill="#FFFFFF" opacity="0.92"/>
   {lens(256, 282, 174, '#FFFFFF', 'url(#glass)', INDIGO, NIGHT, '#FFFFFF')}
 </g>"""
@@ -101,7 +101,8 @@ def svg(w, h, body, title):
             f'<title>{title}</title>{holo_defs()}{body}</svg>\n')
 
 # 1. App icon.
-open('rato-icon.svg', 'w').write(svg(512, 512, icon(0, 0, 512), 'Rato'))
+GLOW = 56
+open('rato-icon.svg', 'w').write(svg(512 + 2 * GLOW, 512 + 2 * GLOW, icon(GLOW, GLOW, 512), 'Rato'))
 
 # 2. Full logo, like the first one: icon as tall as RATO + PHOTO BOOTH.
 def full(ink, tag_ink, blades):
@@ -111,7 +112,9 @@ def full(ink, tag_ink, blades):
     text_x = size + 36
     wm, wm_w = word(text_x, pad + cap, s, ink, blades)
     tg, tg_w = tagline('PHOTO BOOTH', text_x + 4, pad + cap + gap + tag_cap, tag_s, tag_ink, 230)
-    return icon(0, 0, size) + wm + tg, text_x + max(wm_w, tg_w) + 8, size
+    m = round(size * GLOW / 512)       # glow margin at this size
+    body = f'<g transform="translate({m} {m})">' + icon(0, 0, size) + wm + tg + '</g>'
+    return body, text_x + max(wm_w, tg_w) + 8 + 2 * m, size + 2 * m
 for name, ink, tag_ink, blades in (('rato-logo', INDIGO, MUTED, INDIGO), ('rato-logo-white', '#FFFFFF', '#C9C3F2', INDIGO)):
     body, w, h = full(ink, tag_ink, blades)
     open(f'{name}.svg', 'w').write(svg(w, h, body, 'Rato photo booth'))

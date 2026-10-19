@@ -1,8 +1,9 @@
 # Rato - camera logo in holographic colours
 
 The first Rato concept (camera icon, and the "O" of RATO as a lens) in the holographic
-palette: a glossy mesh-gradient tile (cyan, blue, violet, magenta, mint), a white lens ring
-with holographic glass, deep-indigo letters.
+palette: a glossy mesh-gradient tile (cyan, blue, violet, magenta, mint) whose edge fades
+into a soft glow of its own colours (no hard outline), a white lens ring with holographic
+glass, deep-indigo letters. The files include room around the icon for the glow.
 
 | File | Use |
 | --- | --- |
